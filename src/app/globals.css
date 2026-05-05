@@ -1,9 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  
+    --color-bg-primary: #fff8ec;
+    --color-green-primary: #0fa05c;
+    --color-graytext-primary: #3f3f3f;
+    --color-graytext-secondary: #626262;
+    --color-green-bold: #1f6f5f;
 }
 
 @theme inline {
+    --color-bg-primary: #fff8ec;
+    --color-green-primary: #0fa05c;
+    --color-graytext-primary: #3f3f3f;
+    --color-graytext-secondary: #626262;
+    --color-green-bold: #1f6f5f;
+}
 
+@layer {
+  .font-anonymous-400 {
+    font-family: var(--font-anonymous-pro);
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .font-anonymous-700 {
+    font-family: var(--font-anonymous-pro);
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  .font-poppins-400 {
+    font-family: var(--font-poppins);
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .font-poppins-500 {
+    font-family: var(--font-poppins);
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  .font-poppins-600 {
+    font-family: var(--font-poppins);
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .font-poppins-700 {
+    font-family: var(--font-poppins);
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  .font-poppins-800 {
+    font-family: var(--font-poppins);
+    font-weight: 800;
+    font-style: normal;
+  }
+
+  .font-poppins-900 {
+    font-family: var(--font-poppins);
+    font-weight: 900;
+    font-style: normal;
+  }
 }
