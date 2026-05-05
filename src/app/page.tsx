@@ -1,11 +1,7 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
     <section>
-      <p>
-        This is branch dev
-      </p>
+      <h1>tes</h1>
     </section>
   );
 }
