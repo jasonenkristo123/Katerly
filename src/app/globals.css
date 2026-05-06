@@ -6,6 +6,7 @@
     --color-graytext-primary: #3f3f3f;
     --color-graytext-secondary: #626262;
     --color-green-bold: #1f6f5f;
+    --color-green-light: #e6fae2;
 }
 
 @theme inline {
@@ -14,6 +15,8 @@
     --color-graytext-primary: #3f3f3f;
     --color-graytext-secondary: #626262;
     --color-green-bold: #1f6f5f;
+    --color-green-light: #e6fae2;
+    
 }
 
 @layer {
