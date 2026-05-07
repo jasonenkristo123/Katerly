@@ -1,8 +1,9 @@
+import RegisterPage from "@/features/auth/components/RegisterPage";
 
-export default function RegisterPage() {
-  return (
-    <section>
-      <RegisterPage />
-    </section>
-  );
+export default function RegisterSection() {
+    return (
+        <section>
+            <RegisterPage />
+        </section>
+    );
 }
