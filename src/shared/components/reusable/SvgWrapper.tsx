@@ -2,7 +2,6 @@
 
 import { ReactSVG } from "react-svg";
 
-
 type SvgProps = {
     className?: string;
     src: string;
