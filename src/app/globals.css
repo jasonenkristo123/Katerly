@@ -6,6 +6,13 @@
     --color-graytext-primary: #3f3f3f;
     --color-graytext-secondary: #626262;
     --color-green-bold: #1f6f5f;
+    --color-green-superlight: #E6FAE2;
+    --color-cream: #F5E7C3;
+    --color-brown: #362607;
+    --color-redlight: #FFE8E4;
+    --color-red: #DE3C37;
+    --color-green-secondary: #5AC18B;
+    --color-green-bitdark: #289F60;
     --color-green-light: #e6fae2;
 }
 
@@ -15,8 +22,17 @@
     --color-graytext-primary: #3f3f3f;
     --color-graytext-secondary: #626262;
     --color-green-bold: #1f6f5f;
+    --color-green-superlight: #E6FAE2;
+    --background-image-hero-gradient: linear-gradient(121deg,rgba(255, 248, 236, 1) 67%, rgba(15, 160, 92, 1) 100%);
+    --background-image-bg-carakerja: linear-gradient(102deg,rgba(255, 248, 236, 1) 49%, rgba(15, 160, 92, 1) 100%);
+    --background-image-bg-advertise: linear-gradient(131deg,rgba(90, 193, 139, 1) 42%, rgba(40, 159, 96, 1) 89%);
+    --color-cream: #F5E7C3;
+    --color-brown: #362607;
+    --color-redlight: #FFE8E4;
+    --color-red: #DE3C37;
+    --color-green-secondary: #5AC18B;
+    --color-green-bitdark: #289F60;
     --color-green-light: #e6fae2;
-    
 }
 
 @layer {
