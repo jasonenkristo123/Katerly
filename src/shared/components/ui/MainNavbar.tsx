@@ -1,5 +1,4 @@
 "use client"
-import { Bell, Search, ChevronDown } from "lucide-react";
 
 export default function MainNavbar() {
     return (
