@@ -78,8 +78,8 @@ export default function LoginPage() {
                             <Image
                                 src="/images/Google-logo-1.webp"
                                 alt="Google Icon"
-                                width={28}
-                                height={28}
+                                width={40}
+                                height={40}
                             />
 
                             Masuk dengan Google
