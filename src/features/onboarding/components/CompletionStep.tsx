@@ -10,7 +10,7 @@ export default function CompletionStep() {
                 height={64}
             />
 
-            <div className="flex-col flex items-center mt-8">
+            <div className="flex-col flex items-center mt-2">
                 <h1 className="text-4xl lg:text-4xl font-poppins-600 text-black">
                     Setup selesai!
                 </h1>

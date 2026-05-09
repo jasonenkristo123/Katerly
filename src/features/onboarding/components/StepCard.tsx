@@ -8,7 +8,7 @@ export default function StepCard({
     footer,
 }: Props) {
     return (
-        <div className="rounded-3xl bg-white p-6 shadow-md lg:p-10">
+        <div className="rounded-4xl bg-white p-6 shadow-md lg:p-10">
 
             {children}
 
