@@ -6,7 +6,7 @@ export default function MainLayout({
     children
 }: { children: React.ReactNode }) {
     return (
-        <div className="flex h-screen overflow-hidden bg-bg-primary">
+        <div className="flex h-screen overflow-hidden">
             <SideBarPage />
             <div className="flex flex-col flex-1 overflow-hidden">
                 <MainNavbar />
