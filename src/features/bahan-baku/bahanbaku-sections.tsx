@@ -5,6 +5,7 @@ import { Search, Plus, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import Button from "@/shared/components/reusable/Button";
 import ModalParent from "@/shared/components/modal/ModalParent";
 import TambahBahanChildModal from "@/shared/components/modal/modal-children/tambah-bahan";
+import PaginationPage from "@/shared/components/reusable/PaginationPage";
 
 export interface BahanBakuItem {
     id: number;
@@ -41,7 +42,7 @@ const initialBahanBakuData: BahanBakuItem[] = [
         trend: "down",
         diupdate: "20 hari lalu",
     },
-    // Adding more rows for demonstration
+
     ...Array(10).fill(null).map((_, i) => ({
         id: i + 3,
         nama: "Beras Premium",
@@ -59,6 +60,8 @@ export default function BahanBaku() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<BahanBakuItem | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     const handleOpenAddModal = () => {
         setSelectedItem(null);
@@ -108,6 +111,23 @@ export default function BahanBaku() {
         setSelectedItem(null);
     };
 
+    const totalPages = Math.ceil(data.length / itemsPerPage);
+    
+    const safePage = Math.max(1, Math.min(currentPage, totalPages || 1));
+    
+    if (currentPage !== safePage) {
+        setCurrentPage(safePage);
+    }
+
+    const paginatedData = data.slice(
+        (safePage - 1) * itemsPerPage,
+        safePage * itemsPerPage
+    );
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
     return (
         <div className="w-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -115,7 +135,7 @@ export default function BahanBaku() {
                     <h1 className="text-4xl font-bold text-graytext-primary mb-2 font-poppins-700">
                         Bahan Baku
                     </h1>
-                    <p className="text-graytext-secondary text-base font-poppins-400 max-w-2xl">
+                    <p className="text-graytext-secondary text-base font-poppins-400 max-w-3xl">
                         Tambah dan perbarui bahan agar dapat membuat resep dan menjaga HPP tetap akurat
                     </p>
                 </div>
@@ -169,10 +189,10 @@ export default function BahanBaku() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {data.map((item, index) => (
+                            {paginatedData.map((item, index) => (
                                 <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="px-4 md:px-8 py-4 md:py-5 text-center text-graytext-secondary font-poppins-400 text-sm">
-                                        {index + 1}
+                                        {(safePage - 1) * itemsPerPage + index + 1}
                                     </td>
                                     <td className="px-4 md:px-8 py-4 md:py-5">
                                         <span className="font-poppins-600 text-graytext-primary text-sm md:text-[15px] block truncate max-w-[120px] md:max-w-none">
@@ -247,6 +267,14 @@ export default function BahanBaku() {
                     </table>
                 </div>
             </div>
+
+            <PaginationPage 
+                currentPage={safePage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={data.length}
+                itemsPerPage={itemsPerPage}
+            />
 
             {/* Form Modal */}
             <ModalParent 
