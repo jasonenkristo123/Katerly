@@ -1,74 +1,83 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ChefHat, Plus, Search } from "lucide-react";
+import RecipeCard from "./recipecard";
+import TambahResepModal from "./tambah-resep-modal";
+
+export interface RecipeItem {
+    id: number;
+    nama: string;
+    porsi: number;
+    totalBahan: number;
+}
 
 export default function RecipeSection() {
-    const recipes: [] = [];
+    const [recipes, setRecipes] = useState<RecipeItem[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
-        <section className="space-y-8 w-full">
+        <section className="w-full space-y-8">
 
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
                 <div>
-                    <h1 className="text-4xl font-poppins-700 text-black">
+                    <h1 className="text-4xl font-poppins-700 text-graytext-primary">
                         Resep
                     </h1>
 
-                    <p className="mt-2 text-graytext-secondary">
+                    <p className="mt-2 text-base text-graytext-secondary font-poppins-400">
                         Kelola resep menu catering Anda
                     </p>
                 </div>
 
                 <button
+                    onClick={() => setIsModalOpen(true)}
                     className="
-                        flex items-center gap-3
+                        flex items-center gap-2
                         bg-green-primary
                         hover:bg-green-bitdark
-                        transition-colors
+                        transition-all
                         text-white
-                        px-6 py-4
+                        px-7 py-3
                         rounded-full
-                        shadow-lg shadow-green-primary/20
+                        font-poppins-600
                     "
                 >
-                    <Plus size={20} />
+                    Tambah Resep
 
-                    <span className="font-poppins-500">
-                        Tambah Resep
-                    </span>
+                    <Plus size={20} />
                 </button>
             </div>
 
             {/* Search */}
-            <div className="relative max-w-md">
+            <div className="relative w-full max-w-sm">
+
                 <Search
                     size={20}
                     className="
                         absolute
-                        left-5
+                        left-4
                         top-1/2
                         -translate-y-1/2
-                        text-gray-400
+                        text-graytext-secondary
                     "
                 />
 
                 <input
                     type="text"
-                    placeholder="Cari resep..."
+                    placeholder="Cari Resep..."
                     className="
                         w-full
-                        rounded-2xl
-                        border border-gray-200
+                        pl-12
+                        pr-6
+                        py-3
+                        border
+                        border-gray-300
+                        rounded-full
                         bg-white
-                        py-4
-                        pl-14
-                        pr-4
-                        outline-none
-                        transition-all
-                        focus:border-green-primary
-                        focus:ring-2
-                        focus:ring-green-primary/20
                     "
                 />
             </div>
@@ -78,61 +87,69 @@ export default function RecipeSection() {
                 <div
                     className="
                         bg-white
-                        border border-gray-100
-                        rounded-[32px]
-                        shadow-md shadow-gray-200
-                        p-10 md:p-16
-                        flex flex-col items-center justify-center
+                        border
+                        border-gray-200
+                        rounded-3xl
+                        px-8 py-16
+                        flex flex-col
+                        items-center
+                        justify-center
                         text-center
                     "
                 >
-                    {/* Icon */}
+
                     <div
                         className="
                             w-24 h-24
                             rounded-full
                             bg-green-superlight
-                            flex items-center justify-center
+                            flex items-center
+                            justify-center
                             mb-8
                         "
                     >
                         <ChefHat
-                            size={44}
+                            size={42}
                             className="text-green-primary"
                         />
                     </div>
 
-                    {/* Title */}
-                    <h2 className="text-3xl font-poppins-700 text-black">
+                    <h2 className="text-3xl font-poppins-700 text-graytext-primary">
                         Belum Ada Resep
                     </h2>
 
-                    {/* Description */}
-                    <p
-                        className="
-                            mt-4
-                            max-w-xl
-                            text-graytext-secondary
-                            leading-relaxed
-                        "
-                    >
-                        Tambahkan resep pertama Anda untuk mulai menghitung HPP,
-                        margin keuntungan, dan membuat quotation catering
-                        secara otomatis.
+                    <p className="mt-4 text-graytext-secondary max-w-2xl">
+                        Tambahkan resep pertama Anda untuk mulai menghitung
+                        HPP dan margin keuntungan catering.
                     </p>
 
-                    {/* CTA Buttons */}
-                    <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                    <div
+                        className="
+                            mt-6
+                            bg-yellow-50
+                            border
+                            border-yellow-200
+                            text-yellow-700
+                            px-5 py-4
+                            rounded-2xl
+                            text-sm
+                            max-w-xl
+                        "
+                    >
+                        Belum ada bahan baku tersedia.
+                        Resep masih dapat dibuat untuk testing frontend.
+                    </div>
+
+                    <div className="mt-10 flex gap-4">
+
                         <button
+                            onClick={() => setIsModalOpen(true)}
                             className="
-                                flex items-center justify-center gap-3
+                                flex items-center gap-2
                                 bg-green-primary
-                                hover:bg-green-bitdark
-                                transition-colors
                                 text-white
                                 px-8 py-4
                                 rounded-2xl
-                                font-poppins-500
                             "
                         >
                             <Plus size={20} />
@@ -143,19 +160,42 @@ export default function RecipeSection() {
                         <Link
                             href="/bahan-baku"
                             className="
-                                flex items-center justify-center
-                                border border-gray-200
-                                hover:border-green-primary
-                                hover:text-green-primary
-                                transition-all
                                 px-8 py-4
                                 rounded-2xl
-                                font-poppins-500
+                                border
+                                border-gray-300
                             "
                         >
                             Kelola Bahan Baku
                         </Link>
                     </div>
+                </div>
+            )}
+
+            {/* Recipe Cards */}
+            
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div
+                    className="
+                        fixed
+                        inset-0
+                        bg-black/50
+                        z-50
+                        flex
+                        items-center
+                        justify-center
+                        p-4
+                    "
+                >
+                    <TambahResepModal
+                        onClose={() => setIsModalOpen(false)}
+                        onSave={(newRecipe) => {
+                            setRecipes((prev) => [newRecipe, ...prev]);
+                            setIsModalOpen(false);
+                        }}
+                    />
                 </div>
             )}
         </section>
