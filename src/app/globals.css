@@ -14,6 +14,7 @@
     --color-green-secondary: #5AC18B;
     --color-green-bitdark: #289F60;
     --color-green-light: #e6fae2;
+    --color-cream-op: #fffbf2;
 }
 
 @theme inline {
@@ -33,6 +34,7 @@
     --color-green-secondary: #5AC18B;
     --color-green-bitdark: #289F60;
     --color-green-light: #e6fae2;
+    --color-cream-op: #fffbf2;
 }
 
 @layer {
