@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import { RecipeItem } from "./recipecard";
+import Button from "@/shared/components/reusable/Button";
 
 interface Props {
   onClose: () => void;
@@ -298,32 +299,21 @@ export default function TambahResepModal({ onClose, onSave }: Props) {
 
       {/* Footer */}
       <div className="mt-8 flex gap-4">
-        <button
+        <Button
           onClick={onClose}
-          className="
-            flex-1
-            border border-gray-300
-            rounded-2xl
-            py-4
-            cursor-pointer
-          "
+          variant="secondary"
+          className="flex-1 rounded-2xl py-4"
         >
           Batal
-        </button>
+        </Button>
 
-        <button
+        <Button
           onClick={handleSaveRecipe}
-          className="
-            flex-1
-            bg-green-primary
-            text-white
-            rounded-2xl
-            py-4
-            cursor-pointer
-          "
+          variant="primary"
+          className="flex-1 rounded-2xl py-4"
         >
           Simpan Resep
-        </button>
+        </Button>
       </div>
     </div>
   );
