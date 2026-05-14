@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 interface Ingredient {
   id: number;
   nama: string;
@@ -11,26 +9,26 @@ interface Ingredient {
 
 interface Props {
   ingredients: Ingredient[];
+
+  checkedItems: number[];
+
+  onToggle: (id: number) => void;
 }
 
-export default function ShoppingChecklist({ ingredients }: Props) {
-  const [checkedItems, setCheckedItems] = useState<number[]>([]);
-
-  function toggleItem(id: number) {
-    setCheckedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  }
-
+export default function ShoppingChecklist({
+  ingredients,
+  checkedItems,
+  onToggle,
+}: Props) {
   return (
     <div
       className="
-                bg-white
-                rounded-3xl
-                border border-gray-200
-                shadow-sm
-                overflow-hidden
-            "
+        bg-white
+        rounded-3xl
+        border border-gray-200
+        shadow-sm
+        overflow-hidden
+      "
     >
       <div className="divide-y divide-gray-100">
         {ingredients.map((ingredient) => {
@@ -40,37 +38,35 @@ export default function ShoppingChecklist({ ingredients }: Props) {
             <div
               key={ingredient.id}
               className="
-                                px-8 py-6
-                                flex items-center justify-between
-                                gap-4
-                            "
+                px-8 py-6
+                flex items-center justify-between
+                gap-4
+              "
             >
               <div className="flex items-center gap-5">
                 <button
-                  onClick={() => toggleItem(ingredient.id)}
+                  type="button"
+                  onClick={() => onToggle(ingredient.id)}
                   className={`
-                                        w-5 h-5
-                                        rounded-full
-                                        border-2
-                                        cursor-pointer
-                                        transition-all
-                                        ${
-                                          isChecked
-                                            ? "bg-green-primary border-green-primary"
-                                            : "border-green-primary bg-white"
-                                        }
-                                    `}
+                    w-5 h-5
+                    rounded-full
+                    border-2
+                    cursor-pointer
+                    transition-all
+                    flex-shrink-0
+                    ${
+                      isChecked
+                        ? "bg-green-primary border-green-primary"
+                        : "border-green-primary bg-white"
+                    }
+                  `}
                 />
 
                 <span
                   className={`
-                                        text-base
-                                        ${
-                                          isChecked
-                                            ? "line-through text-gray-400"
-                                            : "text-black"
-                                        }
-                                    `}
+                    text-base transition-all
+                    ${isChecked ? "line-through text-gray-400" : "text-black"}
+                  `}
                 >
                   {ingredient.nama}
                 </span>
