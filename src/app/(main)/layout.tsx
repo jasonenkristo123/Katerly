@@ -10,7 +10,7 @@ export default function MainLayout({
             <SideBarPage />
             <div className="flex flex-col flex-1 overflow-hidden">
                 <MainNavbar />
-                <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+                <main className="flex-1 overflow-y-auto no-scrollbar p-4 lg:p-8">
                     {children}
                 </main>
             </div>
