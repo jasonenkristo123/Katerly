@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Anonymous_Pro} from "next/font/google";
 import "./globals.css";
+import QueryProvider from "@/shared/provider/queryProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -31,7 +32,9 @@ export default function RootLayout({
       className={`${anonymousPro.variable} ${poppins.variable} scroll-smooth`}
       suppressHydrationWarning
     >
-      <body className={poppins.className}>{children}</body>
+      <QueryProvider>
+        <body className={poppins.className}>{children}</body>
+      </QueryProvider>
     </html>
   );
 }

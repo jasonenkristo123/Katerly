@@ -21,8 +21,8 @@ pre-commit:
   parallel: true
   commands: 
     type-check:
-      glob: "*.{ts, tsx}"
-      run: npx tsx --noEmit
+      glob: "*.{ts,tsx}"
+      run: npx tsc --noEmit
 
     eslint:
       glob: "*.{js, jsx, ts, tsx}"
