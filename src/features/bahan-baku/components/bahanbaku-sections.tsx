@@ -80,7 +80,6 @@ export default function BahanBaku() {
         }
     };
 
-    // Handle cases where API might return { data: [...] } or just [...]
     const data: TResponseAllIngridients[] = Array.isArray(ingridientsData)
         ? ingridientsData
         : (typeof ingridientsData === "object" && ingridientsData !== null && "data" in ingridientsData && Array.isArray((ingridientsData as { data: unknown }).data))

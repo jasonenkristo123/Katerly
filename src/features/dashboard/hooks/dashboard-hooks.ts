@@ -1,17 +1,17 @@
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { getDashboardData } from "../service/dashboard-api"
-import { DashboardApiResponse } from "../types/dashboard-types"
+import { DashboardData } from "../types/dashboard-types"
 
 
 export const useGetDashboardData = (year: number, month: number) => {
-    return useQuery<DashboardApiResponse>({
+    return useQuery<DashboardData>({
         queryKey: ['dashboard', year, month],
         queryFn: () => getDashboardData(year, month)
     })
 }
 
 export const useSuspenseGetDashboardData = (year: number, month: number) => {
-    return useSuspenseQuery<DashboardApiResponse>({
+    return useSuspenseQuery<DashboardData>({
         queryKey: ['dashboard', year, month],
         queryFn: () => getDashboardData(year, month)
     })

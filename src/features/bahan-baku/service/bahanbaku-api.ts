@@ -3,6 +3,7 @@ import type { TDeleteIngridients, TPostIngridients, TPutIngridients, TResponseAl
 
 export const getAllIngridients = async (): Promise<TResponseAllIngridients[]> => {
     const response = await api.get('/ingredients');
+    console.log(response.data);
     return response.data;
 }
 

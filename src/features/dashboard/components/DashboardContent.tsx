@@ -35,8 +35,7 @@ interface DashboardContentProps {
 }
 
 export default function DashboardContent({ year, month }: DashboardContentProps) {
-    const { data: response, isLoading } = useGetDashboardData(year, month);
-    const dashboard = response?.data;
+    const { data: dashboard, isLoading } = useGetDashboardData(year, month);
 
     if (isLoading || !dashboard) {
         return <DashboardSkeleton />;

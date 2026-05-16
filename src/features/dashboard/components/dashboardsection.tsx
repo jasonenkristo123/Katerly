@@ -49,9 +49,9 @@ const DashboardSection = () => {
 
     // Build month options from registration date to current month
     const monthOptions = useMemo(() => {
-        const profileData = profileResponse?.data;
-        if (profileData?.createdAt) {
-            const regDate = new Date(profileData.createdAt);
+        const profileData = profileResponse?.updatedAt;
+        if (profileData) {
+            const regDate = new Date(profileData);
             return buildMonthOptions(regDate.getFullYear(), regDate.getMonth() + 1);
         }
         // Fallback: only show current month if no profile data yet
