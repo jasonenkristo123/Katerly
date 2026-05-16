@@ -1,4 +1,4 @@
-import HistorySection from "@/features/history-nota/HistorySection";
+import HistorySection from "@/features/history-nota/components/HistorySection";
 
 export default function History() {
     return (

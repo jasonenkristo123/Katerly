@@ -3,71 +3,48 @@
 import React, { useState } from "react";
 import { Search, Download } from "lucide-react";
 import PaginationPage from "@/shared/components/reusable/PaginationPage";
+import { useGetHistoryInvoice } from "../hooks/history-hooks";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface NotaItem {
-    id: number;
-    kode: string;
-    acara: string;
+    notaId: number;
+    nomorInvoice: string;
+    namaClient: string;
+    noWaClient: string;
+    namaAcara: string;
     tanggalAcara: string;
-    margin: string;
-    marginColor: "green" | "red";
-    total: string;
+    pajakPersen: number;
+    biayaPengantaran: number;
+    totalHpp: number;
+    totalHargaJual: number;
+    totalProfit: number;
+    marginAktual: number;
+    status: string;
 }
-
-// ─── Dummy Data ──────────────────────────────────────────────────────────────
-
-const dummyNotaData: NotaItem[] = [
-    { id: 1, kode: "INV-101", acara: "Arisan", tanggalAcara: "11 Mei 2025", margin: "5%", marginColor: "green", total: "Rp 250.000" },
-    { id: 2, kode: "INV-102", acara: "Arisan", tanggalAcara: "20 Mei 2025", margin: "40%", marginColor: "green", total: "Rp 400.000" },
-    { id: 3, kode: "INV-103", acara: "Pernikahan", tanggalAcara: "25 Mei 2025", margin: "15%", marginColor: "green", total: "Rp 1.200.000" },
-    { id: 4, kode: "INV-104", acara: "Ulang Tahun", tanggalAcara: "1 Jun 2025", margin: "8%", marginColor: "green", total: "Rp 350.000" },
-    { id: 5, kode: "INV-105", acara: "Rapat Kantor", tanggalAcara: "5 Jun 2025", margin: "12%", marginColor: "green", total: "Rp 500.000" },
-    { id: 6, kode: "INV-106", acara: "Pengajian", tanggalAcara: "10 Jun 2025", margin: "3%", marginColor: "red", total: "Rp 180.000" },
-    { id: 7, kode: "INV-107", acara: "Arisan", tanggalAcara: "12 Jun 2025", margin: "25%", marginColor: "green", total: "Rp 600.000" },
-    { id: 8, kode: "INV-108", acara: "Syukuran", tanggalAcara: "18 Jun 2025", margin: "10%", marginColor: "green", total: "Rp 450.000" },
-    { id: 9, kode: "INV-109", acara: "Pernikahan", tanggalAcara: "22 Jun 2025", margin: "35%", marginColor: "green", total: "Rp 2.000.000" },
-    { id: 10, kode: "INV-110", acara: "Arisan", tanggalAcara: "28 Jun 2025", margin: "7%", marginColor: "green", total: "Rp 300.000" },
-    { id: 11, kode: "INV-111", acara: "Rapat Kantor", tanggalAcara: "2 Jul 2025", margin: "18%", marginColor: "green", total: "Rp 550.000" },
-    { id: 12, kode: "INV-112", acara: "Ulang Tahun", tanggalAcara: "8 Jul 2025", margin: "2%", marginColor: "red", total: "Rp 200.000" },
-    { id: 13, kode: "INV-113", acara: "Pengajian", tanggalAcara: "15 Jul 2025", margin: "20%", marginColor: "green", total: "Rp 750.000" },
-    { id: 14, kode: "INV-114", acara: "Arisan", tanggalAcara: "20 Jul 2025", margin: "30%", marginColor: "green", total: "Rp 400.000" },
-    { id: 15, kode: "INV-115", acara: "Pernikahan", tanggalAcara: "25 Jul 2025", margin: "22%", marginColor: "green", total: "Rp 1.800.000" },
-];
-
-// ─── Stats Data ──────────────────────────────────────────────────────────────
 
 interface StatCard {
     label: string;
     value: string;
 }
 
-const statsData: StatCard[] = [
-    { label: "Total Nota", value: "142" },
-    { label: "Margin Rata-Rata", value: "30%" },
-    { label: "Total Profit", value: "RP 2.400.000" },
-];
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function HistorySection() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const { data: historyData, isPending } = useGetHistoryInvoice();
 
-    // Filter data based on search
-    const filteredData = dummyNotaData.filter(
-        (item) =>
-            item.kode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.acara.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredData = (historyData?.data?.notas || []).filter((item: NotaItem) =>
+        item.namaClient.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.nomorInvoice.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.namaAcara.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
     const safePage = Math.max(1, Math.min(currentPage, totalPages || 1));
 
-    if (currentPage !== safePage) {
+    if (currentPage !== safePage && totalPages > 0) {
         setCurrentPage(safePage);
     }
 
@@ -75,6 +52,22 @@ export default function HistorySection() {
         (safePage - 1) * itemsPerPage,
         safePage * itemsPerPage
     );
+
+    const statsData: StatCard[] = [
+        { label: "Total Nota", value: (historyData?.data?.totalNota || 0).toString() },
+        { 
+            label: "Margin Rata-Rata", 
+            value: historyData?.data?.marginRataRata 
+                ? `${historyData.data.marginRataRata}%`
+                : "0%"
+        },
+        { 
+            label: "Total Profit", 
+            value: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(
+                historyData?.data?.totalProfit || 0
+            )
+        },
+    ];
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -102,13 +95,12 @@ export default function HistorySection() {
                         <p className="text-[10px] md:text-xs font-poppins-600 text-graytext-secondary uppercase tracking-wider mb-2">
                             {stat.label}
                         </p>
-                        <p className={`text-2xl md:text-3xl font-poppins-700 ${
-                            index === 1
+                        <p className={`text-2xl md:text-3xl font-poppins-700 ${index === 1
                                 ? "text-green-primary"
                                 : index === 2
-                                ? "text-green-primary"
-                                : "text-graytext-primary"
-                        }`}>
+                                    ? "text-green-primary"
+                                    : "text-graytext-primary"
+                            }`}>
                             {stat.value}
                         </p>
                     </div>
@@ -159,16 +151,24 @@ export default function HistorySection() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {paginatedData.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                            {isPending ? (
+                                <tr>
+                                    <td colSpan={6} className="px-8 py-16 text-center">
+                                        <p className="text-graytext-secondary font-poppins-400 text-base">
+                                            Memuat data...
+                                        </p>
+                                    </td>
+                                </tr>
+                            ) : paginatedData.map((item: NotaItem) => (
+                                <tr key={item.notaId} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="px-4 md:px-8 py-4 md:py-5">
                                         <span className="font-poppins-600 text-graytext-primary text-sm md:text-[15px]">
-                                            {item.kode}
+                                            {item.nomorInvoice}
                                         </span>
                                     </td>
                                     <td className="px-4 md:px-8 py-4 md:py-5">
                                         <span className="font-poppins-400 text-graytext-primary text-sm md:text-[15px]">
-                                            {item.acara}
+                                            {item.namaAcara}
                                         </span>
                                     </td>
                                     <td className="hidden sm:table-cell px-4 md:px-8 py-4 md:py-5">
@@ -177,17 +177,16 @@ export default function HistorySection() {
                                         </span>
                                     </td>
                                     <td className="px-4 md:px-8 py-4 md:py-5 text-center">
-                                        <span className={`font-poppins-600 text-sm md:text-[15px] ${
-                                            item.marginColor === "green"
+                                        <span className={`font-poppins-600 text-sm md:text-[15px] ${item.marginAktual >= 30
                                                 ? "text-green-primary"
-                                                : "text-red"
-                                        }`}>
-                                            {item.margin}
+                                                : "text-red-500"
+                                            }`}>
+                                            {item.marginAktual}%
                                         </span>
                                     </td>
                                     <td className="px-4 md:px-8 py-4 md:py-5 whitespace-nowrap">
                                         <span className="font-poppins-600 text-graytext-primary text-sm md:text-[15px]">
-                                            {item.total}
+                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.totalHargaJual)}
                                         </span>
                                     </td>
                                     <td className="px-4 md:px-8 py-4 md:py-5 text-center">
@@ -202,7 +201,7 @@ export default function HistorySection() {
                             ))}
 
                             {/* Empty state */}
-                            {paginatedData.length === 0 && (
+                            {!isPending && paginatedData.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="px-8 py-16 text-center">
                                         <p className="text-graytext-secondary font-poppins-400 text-base">
