@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLogin, useLoginGoogle } from "../hooks/auth-hooks";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+
 import { LoginSchema, TLoginSchema } from "../schemas/auth-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import withReactContent from "sweetalert2-react-content";
@@ -16,13 +16,6 @@ export default function LoginPage() {
     const router = useRouter();
     const { mutateAsync } = useLogin();
     const { mutateAsync: mutateAsyncGoogle } = useLoginGoogle();
-    const [uxMode, setUxMode] = useState<"popup" | "redirect">("popup");
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            setUxMode(window.innerWidth > 768 ? "popup" : "redirect");
-        }
-    }, []);
 
     const {
         register,
@@ -181,7 +174,7 @@ export default function LoginPage() {
                                     text="signin_with"
                                     theme="outline"
                                     shape="rectangular"
-                                    ux_mode={uxMode}
+                                    ux_mode={window.innerWidth > 768 ? "popup" : "redirect"}
                                     onSuccess={handleGoogleLogin}
                                     onError={() => {
                                         console.log("Login Failed")
