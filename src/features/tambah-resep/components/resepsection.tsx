@@ -20,22 +20,31 @@ export default function RecipeSection() {
   const { data: apiResponse, isLoading } = useRecipes();
   const { mutate: deleteRecipe } = useDeleteRecipe();
 
+  // --- LOGIKA MAPPING DATA YANG SUDAH DIAMANKAN ---
   const recipes: RecipeItem[] = apiResponse?.data
-    ? apiResponse.data.map((item: RecipeResponse) => ({
-        id: item.recipeId,
-        nama: item.namaResep,
-        bahanCount: item.ingredients?.length || 0,
-        porsi: item.jumlahPorsi,
-        hpp: item.jumlahPorsi > 0 ? item.hppFinal / item.jumlahPorsi : 0,
-        margin: item.margin,
-      }))
+    ? apiResponse.data.map((item: RecipeResponse) => {
+        // Fallback berantai: cari hppFinal, jika kosong pakai hppManual, jika kosong default ke 0
+        const rawHpp = item.hppFinal ?? item.hppManual ?? 0;
+        const porsi = item.jumlahPorsi ?? 0;
+        const totalBahan = item.ingredients?.length || 0;
+
+        return {
+          id: item.recipeId,
+          nama: item.namaResep || "Resep Tanpa Nama",
+          bahanCount: totalBahan,
+          porsi: porsi,
+          // Menghindari hasil NaN (Not a Number) yang bisa merusak render kartu visual
+          hpp: porsi > 0 ? rawHpp / porsi : rawHpp,
+          margin: item.margin ?? 30,
+        };
+      })
     : [];
 
   const filteredRecipes = recipes.filter((recipe) =>
     recipe.nama.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // SWEETALERT2
+  // Fungsi Konfirmasi Hapus Dengan SweetAlert2
   function handleDeleteConfirm(id: number, namaResep: string) {
     Swal.fire({
       title: "Hapus Resep?",
@@ -151,7 +160,7 @@ export default function RecipeSection() {
             <RecipeCard
               key={recipe.id}
               recipe={recipe}
-              onDelete={(id) => handleDeleteConfirm(id, recipe.nama)} // Hubungkan ke fungsi konfirmasi baru
+              onDelete={(id) => handleDeleteConfirm(id, recipe.nama)}
               onEdit={(r) => {
                 const rawData = apiResponse?.data?.find(
                   (item: RecipeResponse) => item.recipeId === r.id,
