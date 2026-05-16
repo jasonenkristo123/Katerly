@@ -1,4 +1,4 @@
-import BahanBaku from "@/features/bahan-baku/bahanbaku-sections";
+import BahanBaku from "@/features/bahan-baku/components/bahanbaku-sections";
 
 
 export default function BahanBakuPage() {
