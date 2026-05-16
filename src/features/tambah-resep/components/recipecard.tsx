@@ -4,69 +4,59 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-    ChefHat,
-    MoreVertical,
-    Pencil,
-    Trash2,
-    Eye,
-    UtensilsCrossed,
+  ChefHat,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Eye,
+  UtensilsCrossed,
 } from "lucide-react";
 
 export interface RecipeItem {
-    id: number;
-    nama: string;
-    bahanCount: number;
-    porsi: number;
-    hpp: number;
-    margin: number;
+  id: number;
+  nama: string;
+  bahanCount: number;
+  porsi: number;
+  hpp: number;
+  margin: number;
 }
 
 interface Props {
-    recipe: RecipeItem;
-    onDelete?: (id: number) => void;
-    onEdit?: (recipe: RecipeItem) => void;
-    onDetail?: (id: number) => void;
-    onUse?: (id: number) => void;
+  recipe: RecipeItem;
+  onDelete?: (id: number) => void;
+  onEdit?: (recipe: RecipeItem) => void;
+  onDetail?: (id: number) => void;
+  onUse?: (id: number) => void;
 }
 
 export default function RecipeCard({
-    recipe,
-    onDelete,
-    onEdit,
-    onDetail,
-    onUse,
+  recipe,
+  onDelete,
+  onEdit,
+  onDetail,
+  onUse,
 }: Props) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-    const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
 
-    useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
 
-        function handleClickOutside(event: MouseEvent) {
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(event.target as Node)
-            ) {
-                setIsMenuOpen(false);
-            }
-        }
-
-        document.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            document.removeEventListener(
-                "mousedown",
-                handleClickOutside
-            );
-        };
-
-    }, []);
-
-    return (
-        <div
-            className="
+  return (
+    <div
+      className="
                 group
                 relative
                 w-full
@@ -83,11 +73,10 @@ export default function RecipeCard({
                 duration-300
                 overflow-visible
             "
-        >
-
-            {/* Glow */}
-            <div
-                className="
+    >
+      {/* Glow */}
+      <div
+        className="
                     absolute
                     -top-20
                     -right-20
@@ -100,17 +89,15 @@ export default function RecipeCard({
                     group-hover:opacity-100
                     transition-all
                 "
-            />
+      />
 
-            {/* Header */}
-            <div className="flex items-start justify-between">
-
-                {/* Left */}
-                <div>
-
-                    {/* Icon */}
-                    <div
-                        className="
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        {/* Left */}
+        <div>
+          {/* Icon */}
+          <div
+            className="
                             w-12
                             h-12
                             rounded-2xl
@@ -122,16 +109,13 @@ export default function RecipeCard({
                             justify-center
                             shadow-sm
                         "
-                    >
-                        <ChefHat
-                            size={24}
-                            className="text-green-primary"
-                        />
-                    </div>
+          >
+            <ChefHat size={24} className="text-green-primary" />
+          </div>
 
-                    {/* Title */}
-                    <h2
-                        className="
+          {/* Title */}
+          <h2
+            className="
                             mt-5
                             text-[22px]
                             leading-tight
@@ -140,13 +124,13 @@ export default function RecipeCard({
                             max-w-[220px]
                             break-words
                         "
-                    >
-                        {recipe.nama}
-                    </h2>
+          >
+            {recipe.nama}
+          </h2>
 
-                    {/* Meta */}
-                    <div
-                        className="
+          {/* Meta */}
+          <div
+            className="
                             mt-3
                             flex
                             items-center
@@ -154,30 +138,20 @@ export default function RecipeCard({
                             text-sm
                             text-graytext-secondary
                         "
-                    >
-                        <span>
-                            {recipe.bahanCount} Bahan
-                        </span>
+          >
+            <span>{recipe.bahanCount} Bahan</span>
 
-                        <div className="w-1 h-1 rounded-full bg-gray-400" />
+            <div className="w-1 h-1 rounded-full bg-gray-400" />
 
-                        <span>
-                            {recipe.porsi} Porsi
-                        </span>
-                    </div>
-                </div>
+            <span>{recipe.porsi} Porsi</span>
+          </div>
+        </div>
 
-                {/* Menu */}
-                <div
-                    ref={menuRef}
-                    className="relative"
-                >
-
-                    <button
-                        onClick={() =>
-                            setIsMenuOpen((prev) => !prev)
-                        }
-                        className="
+        {/* Menu */}
+        <div ref={menuRef} className="relative">
+          <button
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="
                             w-10
                             h-10
                             rounded-xl
@@ -187,17 +161,14 @@ export default function RecipeCard({
                             hover:bg-gray-100
                             transition-all
                         "
-                    >
-                        <MoreVertical
-                            size={18}
-                            className="text-graytext-secondary"
-                        />
-                    </button>
+          >
+            <MoreVertical size={18} className="text-graytext-secondary" />
+          </button>
 
-                    {/* Dropdown */}
-                    {isMenuOpen && (
-                        <div
-                            className="
+          {/* Dropdown */}
+          {isMenuOpen && (
+            <div
+              className="
                                 absolute
                                 top-12
                                 right-0
@@ -213,14 +184,13 @@ export default function RecipeCard({
                                 fade-in
                                 zoom-in-95
                             "
-                        >
-
-                            <button
-                                onClick={() => {
-                                    onDetail?.(recipe.id);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="
+            >
+              <button
+                onClick={() => {
+                  onDetail?.(recipe.id);
+                  setIsMenuOpen(false);
+                }}
+                className="
                                     w-full
                                     px-4
                                     py-3
@@ -233,18 +203,17 @@ export default function RecipeCard({
                                     font-poppins-500
                                     text-left
                                 "
-                            >
-                                <Eye size={16} />
+              >
+                <Eye size={16} />
+                Lihat Detail
+              </button>
 
-                                Lihat Detail
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    onEdit?.(recipe);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="
+              <button
+                onClick={() => {
+                  onEdit?.(recipe);
+                  setIsMenuOpen(false);
+                }}
+                className="
                                     w-full
                                     px-4
                                     py-3
@@ -257,18 +226,17 @@ export default function RecipeCard({
                                     font-poppins-500
                                     text-left
                                 "
-                            >
-                                <Pencil size={16} />
+              >
+                <Pencil size={16} />
+                Edit Resep
+              </button>
 
-                                Edit Resep
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    onUse?.(recipe.id);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="
+              <button
+                onClick={() => {
+                  onUse?.(recipe.id);
+                  setIsMenuOpen(false);
+                }}
+                className="
                                     w-full
                                     px-4
                                     py-3
@@ -281,20 +249,19 @@ export default function RecipeCard({
                                     font-poppins-500
                                     text-left
                                 "
-                            >
-                                <UtensilsCrossed size={16} />
+              >
+                <UtensilsCrossed size={16} />
+                Pakai Resep
+              </button>
 
-                                Pakai Resep
-                            </button>
+              <div className="h-px bg-gray-100" />
 
-                            <div className="h-px bg-gray-100" />
-
-                            <button
-                                onClick={() => {
-                                    onDelete?.(recipe.id);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="
+              <button
+                onClick={() => {
+                  onDelete?.(recipe.id);
+                  setIsMenuOpen(false);
+                }}
+                className="
                                     w-full
                                     px-4
                                     py-3
@@ -308,44 +275,41 @@ export default function RecipeCard({
                                     text-red
                                     text-left
                                 "
-                            >
-                                <Trash2 size={16} />
-
-                                Hapus Resep
-                            </button>
-                        </div>
-                    )}
-                </div>
+              >
+                <Trash2 size={16} />
+                Hapus Resep
+              </button>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Pricing */}
-            <div className="mt-8">
-
-                <p
-                    className="
+      {/* Pricing */}
+      <div className="mt-8">
+        <p
+          className="
                         text-xs
                         text-graytext-secondary
                         font-poppins-400
                     "
-                >
-                    HPP / Porsi
-                </p>
+        >
+          HPP / Porsi
+        </p>
 
-                <div className="mt-3 flex items-center justify-between">
-
-                    <h3
-                        className="
+        <div className="mt-3 flex items-center justify-between">
+          <h3
+            className="
                             text-[28px]
                             leading-none
                             font-poppins-700
                             text-black
                         "
-                    >
-                        Rp {recipe.hpp.toLocaleString("id-ID")}
-                    </h3>
+          >
+            Rp {recipe.hpp.toLocaleString("id-ID")}
+          </h3>
 
-                    <div
-                        className="
+          <div
+            className="
                             px-4
                             py-2
                             rounded-2xl
@@ -353,26 +317,25 @@ export default function RecipeCard({
                             border
                             border-green-primary/10
                         "
-                    >
-                        <span
-                            className="
+          >
+            <span
+              className="
                                 text-green-primary
                                 text-xs
                                 font-poppins-700
                             "
-                        >
-                            Margin {recipe.margin}%
-                        </span>
-                    </div>
-                </div>
-            </div>
+            >
+              Margin {recipe.margin}%
+            </span>
+          </div>
+        </div>
+      </div>
 
-            {/* Footer */}
-            <div className="mt-8 grid grid-cols-2 gap-3">
-
-                <button
-                    onClick={() => onUse?.(recipe.id)}
-                    className="
+      {/* Footer */}
+      <div className="mt-8 grid grid-cols-2 gap-3">
+        <button
+          onClick={() => onUse?.(recipe.id)}
+          className="
                         h-11
                         rounded-2xl
                         border
@@ -383,13 +346,13 @@ export default function RecipeCard({
                         text-sm
                         font-poppins-500
                     "
-                >
-                    Pakai
-                </button>
+        >
+          Pakai
+        </button>
 
-                <button
-                    onClick={() => onDetail?.(recipe.id)}
-                    className="
+        <button
+          onClick={() => onDetail?.(recipe.id)}
+          className="
                         h-11
                         rounded-2xl
                         bg-green-primary
@@ -400,10 +363,10 @@ export default function RecipeCard({
                         font-poppins-600
                         shadow-sm
                     "
-                >
-                    Detail
-                </button>
-            </div>
-        </div>
-    );
+        >
+          Detail
+        </button>
+      </div>
+    </div>
+  );
 }
