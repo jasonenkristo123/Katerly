@@ -102,7 +102,6 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
             ) : recipe.ingredients?.length > 0 ? (
               <div className="divide-y divide-gray-100">
                 {recipe.ingredients.map((ing, index) => {
-                  // PENYESUAIAN PENCARIAN ID FALLBACK DAN PROPERTI NAMA BAHAN BAKU TEMANMU
                   const masterData = availableIngredients.find(
                     (m: MasterIngredient) => {
                       const masterId = m.ingredientId ?? m.id;

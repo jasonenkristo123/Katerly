@@ -34,6 +34,9 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
   const [jumlahPorsi, setJumlahPorsi] = useState<string>(
     recipeToEdit?.jumlahPorsi?.toString() || "",
   );
+  const [margin, setMargin] = useState<string>(
+    recipeToEdit?.margin?.toString() || "30",
+  );
   const [hppManual, setHppManual] = useState<string>(
     recipeToEdit?.hppManual?.toString() || "",
   );
@@ -82,11 +85,11 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
   }
 
   function handleSaveRecipe() {
-    if (!namaResep || !jumlahPorsi) {
+    if (!namaResep || !jumlahPorsi || !margin) {
       Swal.fire({
         icon: "warning",
         title: "Form Belum Lengkap",
-        text: "Mohon lengkapi Nama Resep dan Jumlah Porsi terlebih dahulu.",
+        text: "Mohon lengkapi Nama Resep, Jumlah Porsi, dan Margin terlebih dahulu.",
         confirmButtonColor: "#10B981",
       });
       return;
@@ -105,7 +108,7 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
     const payload = {
       namaResep,
       jumlahPorsi: Number(jumlahPorsi),
-      margin: recipeToEdit?.margin ?? 30,
+      margin: Number(margin),
       hppManual: hppManual ? Number(hppManual) : null,
       ingredients: hasSelectedIngredients
         ? ingredients
@@ -198,7 +201,8 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* GRID 3 KOLOM: Jumlah Porsi, Margin, HPP Manual */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-poppins-600">Jumlah Porsi</label>
             <input
@@ -217,6 +221,33 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
               className="mt-2 w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:border-green-primary"
             />
           </div>
+
+          {/* FIELD MARGIN - INI YANG DITAMBAHKAN */}
+          <div>
+            <label className="text-sm font-poppins-600">Margin (%)</label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step="1"
+              value={margin}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (v < 0) {
+                  setMargin("0");
+                  return;
+                }
+                if (v > 100) {
+                  setMargin("100");
+                  return;
+                }
+                setMargin(e.target.value);
+              }}
+              placeholder="30"
+              className="mt-2 w-full border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:border-green-primary"
+            />
+          </div>
+
           <div>
             <label className="text-sm font-poppins-600">
               HPP Manual (Opsional)
@@ -262,14 +293,10 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
           </div>
           <div className="space-y-4">
             {ingredients.map((ingredient, index) => {
-              // PENYESUAIAN PENCARIAN ID FALLBACK BAHAN BAKU TEMANMU
               const selectedMaster = availableIngredients.find(
-                (i: MasterIngredient) => {
-                  const masterId = i.ingredientId ?? i.id;
-                  return masterId === Number(ingredient.ingredientId);
-                },
+                (i: MasterIngredient) =>
+                  i.id === Number(ingredient.ingredientId),
               );
-
               return (
                 <div
                   key={index}
@@ -304,20 +331,11 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
                       <option value="">
                         {isLoadingIngredients ? "Memuat..." : "Pilih Bahan"}
                       </option>
-                      {/* PENYESUAIAN ID DAN NAMA FALLBACK DROPDOWN BAHAN BAKU */}
-                      {availableIngredients.map((ing: MasterIngredient) => {
-                        const masterId = ing.ingredientId ?? ing.id;
-                        const masterNama =
-                          ing.nama ||
-                          ing.name ||
-                          ing.namaBahan ||
-                          `Bahan ID ${masterId}`;
-                        return (
-                          <option key={masterId} value={masterId}>
-                            {masterNama}
-                          </option>
-                        );
-                      })}
+                      {availableIngredients.map((ing: MasterIngredient) => (
+                        <option key={ing.id} value={ing.id}>
+                          {ing.name || ing.namaBahan || `Bahan ID ${ing.id}`}
+                        </option>
+                      ))}
                     </select>
                     <input
                       type="number"

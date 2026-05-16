@@ -20,10 +20,8 @@ export default function RecipeSection() {
   const { data: apiResponse, isLoading } = useRecipes();
   const { mutate: deleteRecipe } = useDeleteRecipe();
 
-  // --- LOGIKA MAPPING DATA YANG SUDAH DIAMANKAN ---
   const recipes: RecipeItem[] = apiResponse?.data
     ? apiResponse.data.map((item: RecipeResponse) => {
-        // Fallback berantai: cari hppFinal, jika kosong pakai hppManual, jika kosong default ke 0
         const rawHpp = item.hppFinal ?? item.hppManual ?? 0;
         const porsi = item.jumlahPorsi ?? 0;
         const totalBahan = item.ingredients?.length || 0;
@@ -33,7 +31,7 @@ export default function RecipeSection() {
           nama: item.namaResep || "Resep Tanpa Nama",
           bahanCount: totalBahan,
           porsi: porsi,
-          // Menghindari hasil NaN (Not a Number) yang bisa merusak render kartu visual
+
           hpp: porsi > 0 ? rawHpp / porsi : rawHpp,
           margin: item.margin ?? 30,
         };
@@ -44,7 +42,6 @@ export default function RecipeSection() {
     recipe.nama.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Fungsi Konfirmasi Hapus Dengan SweetAlert2
   function handleDeleteConfirm(id: number, namaResep: string) {
     Swal.fire({
       title: "Hapus Resep?",
