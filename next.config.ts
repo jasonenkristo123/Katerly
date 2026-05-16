@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_BASE_URL}/api/:path*`
+        destination: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/:path*`
       }
     ]
   },
