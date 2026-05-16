@@ -9,7 +9,6 @@ import PaginationPage from "@/shared/components/reusable/PaginationPage";
 import {
   useRecipes,
   useDeleteRecipe,
-  useUpdateRecipe,
   useIngredients,
 } from "../hooks/useRecipe";
 import {
@@ -18,7 +17,11 @@ import {
   MasterIngridient,
 } from "../schemas/recipeSchema";
 import DetailResepModal from "./detail-resep-modal";
-import { useGenerateShoppingList } from "@/features/daftar-belanja/hooks/useShoppingList";
+import {
+  useShoppingLists,
+  useGenerateShoppingList,
+} from "@/features/daftar-belanja/hooks/useShoppingList";
+import { ShoppingListResponse } from "@/features/daftar-belanja/schemas/shoppingListSchema";
 
 export default function RecipeSection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,10 +37,19 @@ export default function RecipeSection() {
   const { data: apiResponse, isLoading } = useRecipes();
   const { data: ingredientsResponse } = useIngredients();
   const { mutate: deleteRecipe } = useDeleteRecipe();
-  const { mutate: updateRecipe } = useUpdateRecipe();
   const { mutate: generateShoppingList } = useGenerateShoppingList();
+  const { data: shoppingListsResponse } = useShoppingLists();
 
-  const availableIngredients: MasterIngridient[] = ingredientsResponse?.data || [];
+  const availableIngredients: MasterIngridient[] =
+    ingredientsResponse?.data || [];
+
+  // Hitung status isUsed secara dinamis dari daftar belanja aktif
+  const activeShoppingLists = shoppingListsResponse?.data || [];
+  const usedRecipeNames = new Set(
+    activeShoppingLists.flatMap(
+      (sl: ShoppingListResponse) => sl.namaResep || [],
+    ),
+  );
 
   // Helper: hitung HPP total dari bahan baku dengan harga live
   function computeLiveHpp(recipeIngredients: RecipeIngredientDetail[]): number {
@@ -73,7 +85,8 @@ export default function RecipeSection() {
             porsi: porsi,
             hpp: porsi > 0 ? rawHpp / porsi : rawHpp,
             margin: item.margin ?? 30,
-            isUsed: item.isUsed ?? false,
+            isUsed:
+              usedRecipeNames.has(item.namaResep || "") || item.isUsed || false,
           };
         })
         .sort((a: RecipeItem, b: RecipeItem) => {
@@ -122,42 +135,13 @@ export default function RecipeSection() {
         // Step 1: Generate shopping list dari resep
         generateShoppingList([id], {
           onSuccess: () => {
-            // Step 2: Tandai resep sebagai "Sudah Terpakai"
-            const payload = {
-              namaResep: rawData.namaResep,
-              jumlahPorsi: Number(rawData.jumlahPorsi),
-              margin: Number(rawData.margin),
-              hppManual: rawData.hppManual,
-              ingredients:
-                rawData.ingredients?.map((ing: RecipeIngredientDetail) => ({
-                  ingredientId: Number(ing.ingredientId),
-                  quantity: Number(ing.quantity),
-                })) || [],
-              isUsed: true,
-            };
-
-            updateRecipe(
-              { id, payload },
-              {
-                onSuccess: () => {
-                  Swal.fire({
-                    icon: "success",
-                    title: "Daftar Belanja Dibuat!",
-                    text: "Komposisi bahan resep berhasil dikonversi ke daftar belanja.",
-                    timer: 2000,
-                    showConfirmButton: false,
-                  });
-                },
-                onError: () => {
-                  Swal.fire({
-                    icon: "error",
-                    title: "Gagal Memproses",
-                    text: "Resep berhasil ditambahkan ke daftar belanja, tetapi gagal mengubah status resep.",
-                    confirmButtonColor: "#EF4444",
-                  });
-                },
-              },
-            );
+            Swal.fire({
+              icon: "success",
+              title: "Daftar Belanja Dibuat!",
+              text: "Komposisi bahan resep berhasil dikonversi ke daftar belanja.",
+              timer: 2000,
+              showConfirmButton: false,
+            });
           },
           onError: () => {
             Swal.fire({

@@ -64,7 +64,10 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
 
   // Bahan baku yang lengkap (sudah pilih bahan DAN sudah isi jumlah)
   const completeIngredients = ingredients.filter(
-    (ing) => ing.ingredientId !== "" && ing.quantity !== "" && Number(ing.quantity) > 0,
+    (ing) =>
+      ing.ingredientId !== "" &&
+      ing.quantity !== "" &&
+      Number(ing.quantity) > 0,
   );
 
   function handleAddIngredient() {
@@ -111,7 +114,11 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
     }
 
     // Validasi: jika sudah pilih bahan tapi belum lengkap isi jumlahnya
-    if (hasSelectedIngredients && completeIngredients.length === 0 && !hppManual) {
+    if (
+      hasSelectedIngredients &&
+      completeIngredients.length === 0 &&
+      !hppManual
+    ) {
       Swal.fire({
         icon: "warning",
         title: "Data Bahan Belum Lengkap",
@@ -122,7 +129,9 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
     }
 
     // Validasi: Bahan baku tidak boleh duplikat
-    const uniqueIngredientIds = new Set(completeIngredients.map((item) => item.ingredientId));
+    const uniqueIngredientIds = new Set(
+      completeIngredients.map((item) => item.ingredientId),
+    );
     if (uniqueIngredientIds.size !== completeIngredients.length) {
       Swal.fire({
         icon: "warning",
@@ -138,12 +147,13 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
       jumlahPorsi: Number(jumlahPorsi),
       margin: Number(margin),
       hppManual: hppManual ? Number(hppManual) : null,
-      ingredients: completeIngredients.length > 0
-        ? completeIngredients.map((item) => ({
+      ingredients:
+        completeIngredients.length > 0
+          ? completeIngredients.map((item) => ({
               ingredientId: Number(item.ingredientId),
               quantity: Number(item.quantity),
             }))
-        : [],
+          : [],
     };
 
     if (isEditMode && recipeToEdit) {
