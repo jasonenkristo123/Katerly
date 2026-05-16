@@ -16,6 +16,13 @@ export default function LoginPage() {
     const router = useRouter();
     const { mutateAsync } = useLogin();
     const { mutateAsync: mutateAsyncGoogle } = useLoginGoogle();
+    const [uxMode, setUxMode] = useState<"popup" | "redirect">("popup");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            setUxMode(window.innerWidth > 768 ? "popup" : "redirect");
+        }
+    }, []);
 
     const {
         register,
@@ -174,7 +181,7 @@ export default function LoginPage() {
                                     text="signin_with"
                                     theme="outline"
                                     shape="rectangular"
-                                    ux_mode={window.innerWidth > 768 ? "popup" : "redirect"}
+                                    ux_mode={uxMode}
                                     onSuccess={handleGoogleLogin}
                                     onError={() => {
                                         console.log("Login Failed")
