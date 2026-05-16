@@ -6,10 +6,4 @@ export const onboardingService = {
     const response = await api.post("/business-profile", data);
     return response.data;
   },
-
-  // 🔥 TAMBAHKAN: Get profile untuk check apakah user sudah setup
-  getProfile: async () => {
-    const response = await api.get("/business-profile");
-    return response.data;
-  },
 };

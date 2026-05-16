@@ -10,7 +10,6 @@ interface Props {
 }
 
 export default function DetailResepModal({ recipe, onClose }: Props) {
-  // Kita panggil master bahan baku untuk menerjemahkan ingredientId menjadi nama bahan
   const { data: ingredientsResponse, isLoading } = useIngredients();
   const availableIngredients = ingredientsResponse?.data || [];
 
@@ -39,7 +38,7 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
         </button>
       </div>
 
-      {/* Body: Ringkasan Angka (Grid) */}
+      {/* Body: Ringkasan Angka */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4">
           <p className="text-xs text-graytext-secondary font-poppins-500 mb-1">
@@ -103,15 +102,19 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
             ) : recipe.ingredients?.length > 0 ? (
               <div className="divide-y divide-gray-100">
                 {recipe.ingredients.map((ing, index) => {
-                  // Cari nama dan satuan bahan dari data master
+                  // PENYESUAIAN PENCARIAN ID FALLBACK DAN PROPERTI NAMA BAHAN BAKU TEMANMU
                   const masterData = availableIngredients.find(
-                    (m: MasterIngredient) => m.id === ing.ingredientId,
+                    (m: MasterIngredient) => {
+                      const masterId = m.ingredientId ?? m.id;
+                      return masterId === ing.ingredientId;
+                    },
                   );
                   const namaBahan =
+                    masterData?.nama ||
                     masterData?.name ||
                     masterData?.namaBahan ||
                     `Bahan ID ${ing.ingredientId}`;
-                  const satuan = masterData?.unit || masterData?.satuan || "";
+                  const satuan = masterData?.satuan || masterData?.unit || "";
 
                   return (
                     <div

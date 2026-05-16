@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { onboardingService } from "../services/onboardingService";
 import { OnboardingData } from "../schemas/onboardingSchema";
 
@@ -11,14 +11,5 @@ export const useSaveBusinessProfile = () => {
     onError: (error) => {
       console.error("Gagal menyimpan profil bisnis", error);
     }
-  });
-};
-
-export const useCheckProfile = () => {
-  return useQuery({
-    queryKey: ["business-profile"],
-    queryFn: onboardingService.getProfile,
-    retry: false,
-    staleTime: Infinity,
   });
 };

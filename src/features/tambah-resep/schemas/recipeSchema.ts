@@ -16,11 +16,14 @@ export const createRecipeSchema = z.object({
 export type CreateRecipePayload = z.infer<typeof createRecipeSchema>;
 
 export interface MasterIngredient {
-  id: number;
+  id?: number;
+  ingredientId?: number;
   name?: string;
   namaBahan?: string;
+  nama?: string;  
   unit?: string;
   satuan?: string;
+  hargaPerSatuan?: number;
 }
 
 export interface RecipeIngredientDetail {
