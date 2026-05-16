@@ -3,7 +3,7 @@ type Props = {
   onNext: () => void;
   onBack: () => void;
   isLoading?: boolean;
-  isValid?: boolean; // <-- Tambahkan ini
+  isValid?: boolean;
 };
 
 export default function NavigationButtons({
@@ -11,10 +11,9 @@ export default function NavigationButtons({
   onNext,
   onBack,
   isLoading = false,
-  isValid = true, // Default true jika tidak diatur
+  isValid = true,
 }: Props) {
   const isLastStep = step === 4;
-  // Tombol dinonaktifkan jika sedang loading ATAU data belum valid
   const isButtonDisabled = isLoading || !isValid;
 
   return (
@@ -39,10 +38,10 @@ export default function NavigationButtons({
       <button
         type="button"
         onClick={onNext}
-        disabled={isButtonDisabled} // <-- Kunci di sini
+        disabled={isButtonDisabled}
         className={`rounded-full bg-green-primary px-8 py-3 text-sm font-poppins-600 text-white shadow-md transition active:scale-[0.98] ${
           isButtonDisabled
-            ? "opacity-40 cursor-not-allowed" // <-- Efek visual saat terkunci
+            ? "opacity-40 cursor-not-allowed"
             : "cursor-pointer hover:opacity-90"
         }`}
       >

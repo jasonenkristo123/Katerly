@@ -35,21 +35,19 @@ export default function OnboardingShell() {
     setFormData((prev) => ({ ...prev, ...fields }));
   };
 
-  // FUNGSI VALIDASI PER STEP
   const isStepValid = () => {
     if (step === 1) {
       return (
         formData.namaUsaha.trim() !== "" &&
         formData.provinsi.trim() !== "" &&
-        formData.noWhatsapp.trim().length >= 10 // Minimal 10 digit sesuai Zod
+        formData.noWhatsapp.trim().length >= 10
       );
     }
-    // Step 2 (basa-basi), Step 3 (slider otomatis ada isi), Step 4 (selesai) selalu true
     return true;
   };
 
   const handleNext = () => {
-    if (!isStepValid()) return; // Mencegah bypass paksa
+    if (!isStepValid()) return;
 
     if (step < 4) {
       setStep((p) => p + 1);
@@ -98,7 +96,7 @@ export default function OnboardingShell() {
                 onNext={handleNext}
                 onBack={handleBack}
                 isLoading={isPending}
-                isValid={isStepValid()} // <-- Kirim status validasi ke tombol
+                isValid={isStepValid()}
               />
             }
           >
