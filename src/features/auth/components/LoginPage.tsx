@@ -172,6 +172,7 @@ export default function LoginPage() {
                                     text="signin_with"
                                     theme="outline"
                                     shape="rectangular"
+                                    ux_mode={window.innerWidth > 768 ? "popup" : "redirect"}
                                     onSuccess={handleGoogleLogin}
                                     onError={() => {
                                         console.log("Login Failed")
