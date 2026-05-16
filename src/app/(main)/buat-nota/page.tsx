@@ -1,5 +1,5 @@
 
-import BuatNota1Section from "@/features/buat-nota/buat-nota1-section";
+import BuatNota1Section from "@/features/buat-nota/components/buat-nota1-section";
 
 export default function BuatNotaPageSection() {
     return (
@@ -8,4 +8,4 @@ export default function BuatNotaPageSection() {
         </section>
     );
 }
-
+

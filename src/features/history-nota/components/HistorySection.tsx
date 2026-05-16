@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Download } from "lucide-react";
+import { Search, Download, Loader2 } from "lucide-react";
 import PaginationPage from "@/shared/components/reusable/PaginationPage";
 import { useGetHistoryInvoice } from "../hooks/history-hooks";
+import { useMutation } from "@tanstack/react-query";
+import { downloadPdf } from "@/features/buat-nota/service/notes-api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +36,51 @@ export default function HistorySection() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const { data: historyData, isPending } = useGetHistoryInvoice();
+    const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+    const downloadMutation = useMutation({
+        mutationFn: (id: number) => downloadPdf(id),
+        onMutate: (id) => setDownloadingId(id),
+        onSettled: () => setDownloadingId(null),
+        onSuccess: (data: unknown, variables: number) => {
+            try {
+                let url: string;
+                if (data instanceof Blob) {
+                    url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+                } else if (typeof data === 'string' && data.startsWith('http')) {
+                    window.open(data, '_blank');
+                    return;
+                } else {
+                    url = window.URL.createObjectURL(new Blob([data as BlobPart], { type: 'application/pdf' }));
+                }
+                
+                const link = document.createElement('a');
+                link.href = url;
+                // Try to find the item in paginatedData or historyData
+                const allItems = historyData?.data?.notas || [];
+                const item = allItems.find((d: NotaItem) => d.notaId === variables);
+                link.setAttribute('download', `Nota_${item?.nomorInvoice || variables}.pdf`);
+                
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode?.removeChild(link);
+                
+                if (data instanceof Blob || !(typeof data === 'string' && data.startsWith('http'))) {
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (error) {
+                console.error("Error processing PDF blob", error);
+                alert("Gagal mengunduh PDF. Format tidak sesuai.");
+            }
+        },
+        onError: () => {
+            alert("Terjadi kesalahan saat mengunduh PDF.");
+        }
+    });
+
+    const handleDownload = (idNota: number) => {
+        downloadMutation.mutate(idNota);
+    };
 
     const filteredData = (historyData?.data?.notas || []).filter((item: NotaItem) =>
         item.namaClient.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -191,10 +238,16 @@ export default function HistorySection() {
                                     </td>
                                     <td className="px-4 md:px-8 py-4 md:py-5 text-center">
                                         <button
-                                            className="inline-flex items-center justify-center text-graytext-secondary hover:text-green-primary transition-colors p-1.5 rounded-lg hover:bg-green-light"
+                                            onClick={() => handleDownload(item.notaId)}
+                                            disabled={downloadingId === item.notaId}
+                                            className="inline-flex items-center justify-center text-graytext-secondary hover:text-green-primary transition-colors p-1.5 rounded-lg hover:bg-green-light disabled:opacity-50"
                                             title="Download Nota"
                                         >
-                                            <Download size={18} className="md:w-5 md:h-5" />
+                                            {downloadingId === item.notaId ? (
+                                                <Loader2 size={18} className="md:w-5 md:h-5 animate-spin" />
+                                            ) : (
+                                                <Download size={18} className="md:w-5 md:h-5" />
+                                            )}
                                         </button>
                                     </td>
                                 </tr>

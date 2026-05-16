@@ -1,4 +1,4 @@
-import NotaPreview from "@/features/buat-nota/buat-nota2-section";
+import NotaPreview from "@/features/buat-nota/components/buat-nota2-section";
 
 export default function BuatNotaPreviewPage() {
     return (

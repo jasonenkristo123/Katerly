@@ -12,10 +12,13 @@ import {
     TrendingUp
 } from "lucide-react";
 import Button from "@/shared/components/reusable/Button";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useRecipes } from "@/features/tambah-resep/hooks/useRecipe";
+import { usePostNotes } from "../hooks/notes-hooks";
 
 interface NoteItem {
     id: string;
+    recipeId: number;
     nama: string;
     hppPerPorsi: number;
     jumlahPorsi: number;
@@ -29,6 +32,13 @@ interface CustomerInfo {
     tanggal: string;
 }
 
+interface ApiRecipe {
+    recipeId: number;
+    namaResep: string;
+    hppFinal?: number;
+    hargaJual?: number;
+}
+
 export default function BuatNota1Section() {
     const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
         nama: "",
@@ -37,38 +47,80 @@ export default function BuatNota1Section() {
         tanggal: "",
     });
 
-    const [items, setItems] = useState<NoteItem[]>([
-        {
-            id: "1",
-            nama: "Nasi Box Ayam Bakar",
-            hppPerPorsi: 14500,
-            jumlahPorsi: 50,
-            hargaPerPorsi: 22000,
-        },
-        {
-            id: "2",
-            nama: "Air Mineral 330ml",
-            hppPerPorsi: 2200,
-            jumlahPorsi: 50,
-            hargaPerPorsi: 3000,
+    const [hasTax, setHasTax] = useState(false);
+    const [taxPercentage, setTaxPercentage] = useState(10);
+
+    const [items, setItems] = useState<NoteItem[]>([]);
+
+    const { data: recipesData } = useRecipes();
+    const mutation = usePostNotes();
+    const router = useRouter();
+
+    const handleAddRecipe = (recipeId: number) => {
+        const recipe = recipesData?.data?.find((r: ApiRecipe) => r.recipeId === recipeId);
+        if (!recipe) return;
+        setItems(prev => [...prev, {
+            id: Date.now().toString(),
+            recipeId: recipe.recipeId,
+            nama: recipe.namaResep,
+            hppPerPorsi: recipe.hppFinal || 0,
+            jumlahPorsi: 1,
+            hargaPerPorsi: recipe.hargaJual || 0,
+        }]);
+    };
+
+    const handleNext = () => {
+        if (!customerInfo.nama || items.length === 0) {
+            alert("Nama pelanggan dan minimal 1 item harus diisi");
+            return;
         }
-    ]);
+
+        const payload = {
+            namaClient: customerInfo.nama,
+            noWaClient: customerInfo.whatsapp,
+            namaAcara: customerInfo.acara,
+            tanggalAcara: customerInfo.tanggal || new Date().toISOString().split('T')[0],
+            pajakPersen: hasTax ? taxPercentage : 0,
+            biayaPengantaran: 50000, // Or whatever input value you want
+            items: items.map(item => ({
+                recipeId: item.recipeId,
+                jumlahPorsi: item.jumlahPorsi
+            }))
+        };
+
+        mutation.mutate(payload, {
+            onSuccess: (res) => {
+                if (res?.data?.notaId) {
+                    router.push(`/buat-nota/preview?id=${res.data.notaId}`);
+                }
+            }
+        });
+    };
 
     const targetMargin = 35;
 
     const summary = useMemo(() => {
         const totalHpp = items.reduce((acc, item) => acc + (item.hppPerPorsi * item.jumlahPorsi), 0);
         const totalHargaJual = items.reduce((acc, item) => acc + (item.hargaPerPorsi * item.jumlahPorsi), 0);
+        
+        let taxAmount = 0;
+        if (hasTax) {
+            taxAmount = (totalHargaJual * taxPercentage) / 100;
+        }
+        
+        const totalTagihan = totalHargaJual + taxAmount;
         const profit = totalHargaJual - totalHpp;
         const marginActual = totalHargaJual > 0 ? (profit / totalHargaJual) * 100 : 0;
 
         return {
             totalHpp,
             totalHargaJual,
+            taxAmount,
+            totalTagihan,
             profit,
             marginActual
         };
-    }, [items]);
+    }, [items, hasTax, taxPercentage]);
 
     const handleUpdateItem = (id: string, field: keyof NoteItem, value: number) => {
         setItems(prev => prev.map(item =>
@@ -101,16 +153,16 @@ export default function BuatNota1Section() {
                         Buat Nota
                     </h1>
                 </div>
-                <Link href="/buat-nota/preview">
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        className="bg-green-primary hover:bg-green-bitdark text-white rounded-full px-6 py-2.5 flex items-center border-none gap-2 transition-all shadow-sm active:scale-95"
-                    >
-                        Lanjut ke Preview
-                        <ChevronRight size={18} />
-                    </Button>
-                </Link>
+                <Button
+                    onClick={handleNext}
+                    disabled={mutation.isPending}
+                    variant="primary"
+                    size="lg"
+                    className="bg-green-primary hover:bg-green-bitdark text-white rounded-full px-6 py-2.5 flex items-center border-none gap-2 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                >
+                    {mutation.isPending ? "Menyimpan..." : "Lanjut ke Preview"}
+                    <ChevronRight size={18} />
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
@@ -182,13 +234,30 @@ export default function BuatNota1Section() {
                                     Item Nota
                                 </h2>
                             </div>
-                            <Button
-                                variant="secondary"
-                                className="flex items-center gap-2 text-sm font-poppins-600 border border-gray-200 rounded-full px-4 py-2 hover:bg-gray-50 transition-colors"
-                            >
-                                <Plus size={16} />
-                                Tambah dari Resep
-                            </Button>
+                            <div className="relative">
+                                <select 
+                                    onChange={(e) => {
+                                        if (e.target.value) handleAddRecipe(Number(e.target.value));
+                                        e.target.value = "";
+                                    }}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Pilih Resep"
+                                >
+                                    <option value="">Pilih Resep...</option>
+                                    {recipesData?.data?.map((r: ApiRecipe) => (
+                                        <option key={r.recipeId} value={r.recipeId}>
+                                            {r.namaResep}
+                                        </option>
+                                    ))}
+                                </select>
+                                <Button
+                                    variant="secondary"
+                                    className="flex items-center gap-2 text-sm font-poppins-600 border border-gray-200 rounded-full px-4 py-2 hover:bg-gray-50 transition-colors pointer-events-none"
+                                >
+                                    <Plus size={16} />
+                                    Tambah dari Resep
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
@@ -269,7 +338,49 @@ export default function BuatNota1Section() {
                                 <span className="text-graytext-secondary font-poppins-500">Total Harga Jual</span>
                                 <span className="text-graytext-primary font-poppins-600">{formatCurrency(summary.totalHargaJual)}</span>
                             </div>
+
+                            {/* Optional Tax Toggle & Input */}
+                            <div className="pt-4 border-t border-gray-100">
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="flex items-center cursor-pointer select-none">
+                                        <div className="relative">
+                                            <input 
+                                                type="checkbox" 
+                                                className="sr-only" 
+                                                checked={hasTax} 
+                                                onChange={(e) => setHasTax(e.target.checked)} 
+                                            />
+                                            <div className={`block w-10 h-6 rounded-full transition-colors ${hasTax ? 'bg-green-primary' : 'bg-gray-200'}`}></div>
+                                            <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${hasTax ? 'transform translate-x-4' : ''}`}></div>
+                                        </div>
+                                        <span className="ml-3 text-sm text-graytext-primary font-poppins-600">Tambah Pajak</span>
+                                    </label>
+                                    
+                                    {hasTax && (
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number" 
+                                                value={taxPercentage} 
+                                                onChange={(e) => setTaxPercentage(Number(e.target.value))}
+                                                className="w-16 px-2 py-1 text-right bg-gray-50 border border-gray-200 rounded-lg focus:ring-1 focus:ring-green-primary outline-none font-poppins-500"
+                                            />
+                                            <span className="text-graytext-secondary font-poppins-500 text-sm">%</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {hasTax && (
+                                    <div className="flex justify-between items-center mt-2">
+                                        <span className="text-graytext-secondary font-poppins-500 text-sm">Nominal Pajak</span>
+                                        <span className="text-graytext-primary font-poppins-600 text-sm">{formatCurrency(summary.taxAmount)}</span>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="h-px bg-gray-100 w-full" />
+                            <div className="flex justify-between items-center">
+                                <span className="text-graytext-primary font-poppins-600">Total Tagihan</span>
+                                <span className="text-graytext-primary font-bold text-lg">{formatCurrency(summary.totalTagihan)}</span>
+                            </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-graytext-primary font-poppins-600">Profit</span>
                                 <span className="text-green-primary font-bold text-lg">{formatCurrency(summary.profit)}</span>
