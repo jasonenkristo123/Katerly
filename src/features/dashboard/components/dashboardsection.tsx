@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, Suspense } from 'react';
+import { useState, useRef, useEffect, useMemo,} from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useGetProfile } from '@/features/settings/hooks/profileHooks';
 import type { MonthOption } from '../types/dashboard-types';
