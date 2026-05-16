@@ -1,17 +1,10 @@
 "use client";
 
-interface Ingredient {
-  id: number;
-  nama: string;
-  qty: string;
-  harga: number;
-}
+import { ShoppingListItem } from "../schemas/shoppingListSchema";
 
 interface Props {
-  ingredients: Ingredient[];
-
+  ingredients: ShoppingListItem[];
   checkedItems: number[];
-
   onToggle: (id: number) => void;
 }
 
@@ -32,11 +25,13 @@ export default function ShoppingChecklist({
     >
       <div className="divide-y divide-gray-100">
         {ingredients.map((ingredient) => {
-          const isChecked = checkedItems.includes(ingredient.id);
+          const isChecked = checkedItems.includes(
+            ingredient.shoppingListItemId,
+          );
 
           return (
             <div
-              key={ingredient.id}
+              key={ingredient.shoppingListItemId}
               className="
                 px-8 py-6
                 flex items-center justify-between
@@ -46,7 +41,7 @@ export default function ShoppingChecklist({
               <div className="flex items-center gap-5">
                 <button
                   type="button"
-                  onClick={() => onToggle(ingredient.id)}
+                  onClick={() => onToggle(ingredient.shoppingListItemId)}
                   className={`
                     w-5 h-5
                     rounded-full
@@ -68,17 +63,17 @@ export default function ShoppingChecklist({
                     ${isChecked ? "line-through text-gray-400" : "text-black"}
                   `}
                 >
-                  {ingredient.nama}
+                  {ingredient.namaIngredient}
                 </span>
               </div>
 
               <div className="flex items-center gap-12">
                 <span className="text-graytext-secondary">
-                  {ingredient.qty}
+                  {ingredient.totalQuantity} {ingredient.satuan}
                 </span>
 
                 <span className="font-poppins-600 text-black min-w-[120px] text-right">
-                  Rp {ingredient.harga.toLocaleString("id-ID")}
+                  Rp {ingredient.totalHarga.toLocaleString("id-ID")}
                 </span>
               </div>
             </div>

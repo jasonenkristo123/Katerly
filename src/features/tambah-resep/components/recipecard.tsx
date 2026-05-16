@@ -10,6 +10,7 @@ import {
   Trash2,
   Eye,
   UtensilsCrossed,
+  CheckCircle,
 } from "lucide-react";
 
 export interface RecipeItem {
@@ -19,6 +20,7 @@ export interface RecipeItem {
   porsi: number;
   hpp: number;
   margin: number;
+  isUsed: boolean;
 }
 
 interface Props {
@@ -112,6 +114,30 @@ export default function RecipeCard({
           >
             <ChefHat size={24} className="text-green-primary" />
           </div>
+
+          {/* Badge Sudah Terpakai */}
+          {recipe.isUsed && (
+            <div
+              className="
+                mt-3
+                flex
+                items-center
+                gap-1.5
+                px-3
+                py-1.5
+                rounded-full
+                bg-green-primary/10
+                border
+                border-green-primary/20
+                w-fit
+              "
+            >
+              <CheckCircle size={14} className="text-green-primary" />
+              <span className="text-xs font-poppins-600 text-green-primary">
+                Sudah Terpakai
+              </span>
+            </div>
+          )}
 
           {/* Title */}
           <h2
@@ -208,53 +234,57 @@ export default function RecipeCard({
                 Lihat Detail
               </button>
 
-              <button
-                onClick={() => {
-                  onEdit?.(recipe);
-                  setIsMenuOpen(false);
-                }}
-                className="
-                                    w-full
-                                    px-4
-                                    py-3
-                                    flex
-                                    items-center
-                                    gap-3
-                                    hover:bg-gray-50
-                                    transition-all
-                                    text-sm
-                                    font-poppins-500
-                                    text-left
-                                "
-              >
-                <Pencil size={16} />
-                Edit Resep
-              </button>
+              {!recipe.isUsed && (
+                <>
+                  <button
+                    onClick={() => {
+                      onEdit?.(recipe);
+                      setIsMenuOpen(false);
+                    }}
+                    className="
+                                        w-full
+                                        px-4
+                                        py-3
+                                        flex
+                                        items-center
+                                        gap-3
+                                        hover:bg-gray-50
+                                        transition-all
+                                        text-sm
+                                        font-poppins-500
+                                        text-left
+                                    "
+                  >
+                    <Pencil size={16} />
+                    Edit Resep
+                  </button>
 
-              <button
-                onClick={() => {
-                  onUse?.(recipe.id);
-                  setIsMenuOpen(false);
-                }}
-                className="
-                                    w-full
-                                    px-4
-                                    py-3
-                                    flex
-                                    items-center
-                                    gap-3
-                                    hover:bg-gray-50
-                                    transition-all
-                                    text-sm
-                                    font-poppins-500
-                                    text-left
-                                "
-              >
-                <UtensilsCrossed size={16} />
-                Pakai Resep
-              </button>
+                  <button
+                    onClick={() => {
+                      onUse?.(recipe.id);
+                      setIsMenuOpen(false);
+                    }}
+                    className="
+                                        w-full
+                                        px-4
+                                        py-3
+                                        flex
+                                        items-center
+                                        gap-3
+                                        hover:bg-gray-50
+                                        transition-all
+                                        text-sm
+                                        font-poppins-500
+                                        text-left
+                                    "
+                  >
+                    <UtensilsCrossed size={16} />
+                    Pakai Resep
+                  </button>
 
-              <div className="h-px bg-gray-100" />
+                  <div className="h-px bg-gray-100" />
+                </>
+              )}
 
               <button
                 onClick={() => {
@@ -334,20 +364,28 @@ export default function RecipeCard({
       {/* Footer */}
       <div className="mt-8 grid grid-cols-2 gap-3">
         <button
-          onClick={() => onUse?.(recipe.id)}
-          className="
+          onClick={() => !recipe.isUsed && onUse?.(recipe.id)}
+          disabled={recipe.isUsed}
+          className={`
                         h-11
                         rounded-2xl
                         border
-                        border-gray-300
-                        hover:border-black
-                        hover:bg-gray-50
                         transition-all
                         text-sm
                         font-poppins-500
-                    "
+                        flex
+                        items-center
+                        justify-center
+                        gap-1.5
+                        ${
+                          recipe.isUsed
+                            ? "border-green-primary/20 bg-green-primary/5 text-green-primary cursor-not-allowed"
+                            : "border-gray-300 hover:border-black hover:bg-gray-50"
+                        }
+                    `}
         >
-          Pakai
+          {recipe.isUsed && <CheckCircle size={14} />}
+          {recipe.isUsed ? "Sudah Terpakai" : "Pakai"}
         </button>
 
         <button

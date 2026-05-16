@@ -12,7 +12,7 @@ import {
 import {
   RecipeResponse,
   RecipeIngredientDetail,
-  MasterIngredient,
+  MasterIngridient,
 } from "../schemas/recipeSchema";
 
 interface Props {
@@ -62,6 +62,11 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
     (ing) => ing.ingredientId !== "",
   );
 
+  // Bahan baku yang lengkap (sudah pilih bahan DAN sudah isi jumlah)
+  const completeIngredients = ingredients.filter(
+    (ing) => ing.ingredientId !== "" && ing.quantity !== "" && Number(ing.quantity) > 0,
+  );
+
   function handleAddIngredient() {
     setIngredients((prev) => [...prev, { ingredientId: "", quantity: "" }]);
   }
@@ -79,17 +84,17 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
     updated[index][field] = value;
     setIngredients(updated);
 
-    if (field === "ingredientId" && value !== "" && !isEditMode) {
+    if (field === "ingredientId" && value !== "") {
       setHppManual("");
     }
   }
 
   function handleSaveRecipe() {
-    if (!namaResep || !jumlahPorsi || !margin) {
+    if (!namaResep || !jumlahPorsi || Number(jumlahPorsi) <= 0 || !margin) {
       Swal.fire({
         icon: "warning",
         title: "Form Belum Lengkap",
-        text: "Mohon lengkapi Nama Resep, Jumlah Porsi, dan Margin terlebih dahulu.",
+        text: "Mohon lengkapi Nama Resep, Jumlah Porsi (minimal 1), dan Margin terlebih dahulu.",
         confirmButtonColor: "#10B981",
       });
       return;
@@ -105,15 +110,36 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
       return;
     }
 
+    // Validasi: jika sudah pilih bahan tapi belum lengkap isi jumlahnya
+    if (hasSelectedIngredients && completeIngredients.length === 0 && !hppManual) {
+      Swal.fire({
+        icon: "warning",
+        title: "Data Bahan Belum Lengkap",
+        text: "Mohon isi jumlah (quantity) untuk setiap bahan baku yang dipilih.",
+        confirmButtonColor: "#10B981",
+      });
+      return;
+    }
+
+    // Validasi: Bahan baku tidak boleh duplikat
+    const uniqueIngredientIds = new Set(completeIngredients.map((item) => item.ingredientId));
+    if (uniqueIngredientIds.size !== completeIngredients.length) {
+      Swal.fire({
+        icon: "warning",
+        title: "Bahan Baku Duplikat",
+        text: "Terdapat bahan baku yang sama dipilih lebih dari satu kali. Mohon gabungkan jumlahnya menjadi satu.",
+        confirmButtonColor: "#10B981",
+      });
+      return;
+    }
+
     const payload = {
       namaResep,
       jumlahPorsi: Number(jumlahPorsi),
       margin: Number(margin),
       hppManual: hppManual ? Number(hppManual) : null,
-      ingredients: hasSelectedIngredients
-        ? ingredients
-            .filter((item) => item.ingredientId && item.quantity)
-            .map((item) => ({
+      ingredients: completeIngredients.length > 0
+        ? completeIngredients.map((item) => ({
               ingredientId: Number(item.ingredientId),
               quantity: Number(item.quantity),
             }))
@@ -201,7 +227,6 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
           />
         </div>
 
-        {/* GRID 3 KOLOM: Jumlah Porsi, Margin, HPP Manual */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-poppins-600">Jumlah Porsi</label>
@@ -293,9 +318,12 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
           <div className="space-y-4">
             {ingredients.map((ingredient, index) => {
               const selectedMaster = availableIngredients.find(
-                (i: MasterIngredient) =>
-                  i.id === Number(ingredient.ingredientId),
+                (i: MasterIngridient) => {
+                  const masterId = i.ingredientId ?? i.id ?? 0;
+                  return masterId === Number(ingredient.ingredientId);
+                },
               );
+
               return (
                 <div
                   key={index}
@@ -330,11 +358,19 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
                       <option value="">
                         {isLoadingIngredients ? "Memuat..." : "Pilih Bahan"}
                       </option>
-                      {availableIngredients.map((ing: MasterIngredient) => (
-                        <option key={ing.id} value={ing.id}>
-                          {ing.name || ing.namaBahan || `Bahan ID ${ing.id}`}
-                        </option>
-                      ))}
+                      {availableIngredients.map((ing: MasterIngridient) => {
+                        const masterId = ing.ingredientId ?? ing.id ?? 0;
+                        const masterNama =
+                          ing.nama ||
+                          ing.name ||
+                          ing.namaBahan ||
+                          `Bahan ID ${masterId}`;
+                        return (
+                          <option key={masterId} value={masterId}>
+                            {masterNama}
+                          </option>
+                        );
+                      })}
                     </select>
                     <input
                       type="number"
@@ -360,7 +396,7 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
                       type="text"
                       placeholder="Satuan"
                       value={
-                        selectedMaster?.unit || selectedMaster?.satuan || ""
+                        selectedMaster?.satuan || selectedMaster?.unit || ""
                       }
                       disabled
                       className="border border-gray-200 bg-gray-50 text-gray-400 rounded-2xl px-4 py-4 outline-none cursor-not-allowed"

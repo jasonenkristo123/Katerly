@@ -1,18 +1,23 @@
-import { ChefHat } from "lucide-react";
+import { ChefHat, Trash2 } from "lucide-react";
 
 interface Props {
   recipe: {
     id: number;
     nama: string;
     bahanCount: number;
-    porsi: number;
     totalHarga: number;
+    tanggal: string;
   };
 
   onBelanja: () => void;
+  onDelete: () => void;
 }
 
-export default function ShoppingRecipeCard({ recipe, onBelanja }: Props) {
+export default function ShoppingRecipeCard({
+  recipe,
+  onBelanja,
+  onDelete,
+}: Props) {
   return (
     <div
       className="
@@ -100,7 +105,7 @@ export default function ShoppingRecipeCard({ recipe, onBelanja }: Props) {
 
           <div className="w-1 h-1 rounded-full bg-gray-400" />
 
-          <span>{recipe.porsi} Porsi</span>
+          <span>{recipe.tanggal}</span>
         </div>
       </div>
 
@@ -131,20 +136,43 @@ export default function ShoppingRecipeCard({ recipe, onBelanja }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="mt-8">
+      <div className="mt-8 grid grid-cols-2 gap-3">
         <button
-          onClick={onBelanja}
+          onClick={onDelete}
           className="
-            w-full
             h-11
             rounded-2xl
             border
             border-gray-300
-            hover:border-black
-            hover:bg-gray-50
+            hover:border-red-400
+            hover:bg-red-50
+            hover:text-red-500
             transition-all
             text-sm
             font-poppins-500
+            cursor-pointer
+            flex
+            items-center
+            justify-center
+            gap-1.5
+          "
+        >
+          <Trash2 size={14} />
+          Hapus
+        </button>
+
+        <button
+          onClick={onBelanja}
+          className="
+            h-11
+            rounded-2xl
+            bg-green-primary
+            hover:bg-green-bitdark
+            transition-all
+            text-white
+            text-sm
+            font-poppins-600
+            shadow-sm
             cursor-pointer
           "
         >

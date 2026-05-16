@@ -1,7 +1,7 @@
 "use client";
 
 import { X, ChefHat } from "lucide-react";
-import { RecipeResponse, MasterIngredient } from "../schemas/recipeSchema";
+import { RecipeResponse, MasterIngridient } from "../schemas/recipeSchema";
 import { useIngredients } from "../hooks/useRecipe";
 
 interface Props {
@@ -11,7 +11,23 @@ interface Props {
 
 export default function DetailResepModal({ recipe, onClose }: Props) {
   const { data: ingredientsResponse, isLoading } = useIngredients();
-  const availableIngredients = ingredientsResponse?.data || [];
+  const availableIngredients: MasterIngridient[] = ingredientsResponse?.data || [];
+
+  // Hitung HPP live dari harga bahan baku terkini
+  const liveHpp: number = (() => {
+    if (recipe.hppManual !== null) return recipe.hppManual;
+    if (!recipe.ingredients || recipe.ingredients.length === 0) return recipe.hppFinal ?? 0;
+    return recipe.ingredients.reduce((total, ing) => {
+      const master = availableIngredients.find((m) => {
+        const masterId = m.ingredientId ?? m.id ?? 0;
+        return masterId === ing.ingredientId;
+      });
+      const harga = master?.hargaPerSatuan ?? 0;
+      return total + harga * ing.quantity;
+    }, 0);
+  })();
+
+  const liveHargaJual = liveHpp * (1 + (recipe.margin ?? 30) / 100);
 
   return (
     <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent bg-white rounded-[32px] p-8">
@@ -38,7 +54,7 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
         </button>
       </div>
 
-      {/* Body: Ringkasan Angka */}
+      {/* Ringkasan Finansial / Porsi */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4">
           <p className="text-xs text-graytext-secondary font-poppins-500 mb-1">
@@ -64,7 +80,7 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
             Total HPP
           </p>
           <p className="text-lg font-poppins-700 text-black">
-            Rp {recipe.hppFinal?.toLocaleString("id-ID") || 0}
+            Rp {liveHpp?.toLocaleString("id-ID") || 0}
           </p>
         </div>
         <div className="bg-green-superlight border border-green-primary/10 rounded-2xl p-4">
@@ -72,12 +88,12 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
             Harga Jual
           </p>
           <p className="text-lg font-poppins-700 text-green-primary">
-            Rp {recipe.hargaJual?.toLocaleString("id-ID") || 0}
+            Rp {Math.round(liveHargaJual)?.toLocaleString("id-ID") || 0}
           </p>
         </div>
       </div>
 
-      {/* Body: Rincian Bahan Baku */}
+      {/* Rincian Komposisi Bahan Baku */}
       <div className="mt-8">
         <h3 className="text-lg font-poppins-700 text-graytext-primary mb-4">
           Komposisi Bahan Baku
@@ -99,12 +115,13 @@ export default function DetailResepModal({ recipe, onClose }: Props) {
               <div className="p-8 text-center text-gray-400 font-poppins-400 text-sm">
                 Memuat rincian bahan...
               </div>
-            ) : recipe.ingredients?.length > 0 ? (
+            ) : recipe.ingredients && recipe.ingredients.length > 0 ? (
               <div className="divide-y divide-gray-100">
                 {recipe.ingredients.map((ing, index) => {
+                  // SINKRONISASI PENCARIAN ID & NAMA DENGAN FORMAT TYPO 'I'
                   const masterData = availableIngredients.find(
-                    (m: MasterIngredient) => {
-                      const masterId = m.ingredientId ?? m.id;
+                    (m: MasterIngridient) => {
+                      const masterId = m.ingredientId ?? m.id ?? 0;
                       return masterId === ing.ingredientId;
                     },
                   );

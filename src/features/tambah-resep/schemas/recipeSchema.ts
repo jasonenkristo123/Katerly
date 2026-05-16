@@ -11,19 +11,22 @@ export const createRecipeSchema = z.object({
       quantity: z.number(),
     })
   ).optional(),
+  isUsed: z.boolean().optional(), // Validasi payload isUsed aman dari Zod error
 });
 
 export type CreateRecipePayload = z.infer<typeof createRecipeSchema>;
 
-export interface MasterIngredient {
+// --- INTERFACE RESPONSE DATA (SINKRON FRONTEND) ---
+
+export interface MasterIngridient {
   id?: number;
-  ingredientId?: number;
+  ingredientId?: number; 
   name?: string;
   namaBahan?: string;
-  nama?: string;  
+  nama?: string;        
   unit?: string;
   satuan?: string;
-  hargaPerSatuan?: number;
+  hargaPerSatuan?: number; 
 }
 
 export interface RecipeIngredientDetail {
@@ -39,5 +42,6 @@ export interface RecipeResponse {
   hppManual: number | null;
   hppFinal: number;
   hargaJual: number;
-  ingredients: RecipeIngredientDetail[];
+  ingredients?: RecipeIngredientDetail[]; 
+  isUsed?: boolean; 
 }
