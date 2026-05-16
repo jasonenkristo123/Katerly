@@ -222,7 +222,6 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
             />
           </div>
 
-          {/* FIELD MARGIN - INI YANG DITAMBAHKAN */}
           <div>
             <label className="text-sm font-poppins-600">Margin (%)</label>
             <input
