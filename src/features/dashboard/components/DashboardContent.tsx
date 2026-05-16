@@ -168,7 +168,7 @@ export default function DashboardContent({ year, month }: DashboardContentProps)
                 </div>
             </div>
 
-            <Link href="/buat-nota" >
+            <Link href="/buat-nota">
                 <div className="bg-white p-6 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex items-center justify-between group cursor-pointer hover:border-green-primary/30 transition-all">
                     <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-green-superlight flex items-center justify-center text-green-primary">
