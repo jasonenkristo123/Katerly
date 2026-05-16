@@ -12,12 +12,14 @@ import withReactContent from "sweetalert2-react-content";
 import Swal from "sweetalert2";
 import { AxiosError } from "axios";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { ProfileChecking } from "@/shared/utils/profileChecking";
 
 export default function LoginPage() {
     const router = useRouter();
     const { mutateAsync } = useLogin();
     const { mutateAsync: mutateAsyncGoogle } = useLoginGoogle();
     const [uxMode, setUxMode] = useState<"popup" | "redirect">("popup");
+    const isProfileExist = ProfileChecking();
 
     useEffect(() => {
         // Use setTimeout to avoid 'setState synchronously within an effect' warning
@@ -70,7 +72,11 @@ export default function LoginPage() {
             timer: 3000,
             timerProgressBar: true,
             didClose: () => {
-                router.push("/dashboard")
+                if (isProfileExist) {
+                    router.push("/dashboard")
+                } else {
+                    router.push("/onboarding");
+                }
             }
         })
     }
@@ -102,7 +108,7 @@ export default function LoginPage() {
 
 
     return (
-        <section className="flex min-h-screen w-full bg-white font-['Poppins']">
+        <section className="flex h-screen w-full bg-white font-['Poppins']">
 
             <div className="flex w-full flex-col md:items-center px-6 py-8 lg:w-1/2 lg:px-12">
 
@@ -114,7 +120,7 @@ export default function LoginPage() {
                     </Link>
                 </div>
 
-                <div className="flex flex-col mt-40">
+                <div className="flex flex-col mt-20 xl:mt-40">
 
                     <div className="mb-6">
                         <h1 className="text-4xl lg:text-5xl font-bold text-black">

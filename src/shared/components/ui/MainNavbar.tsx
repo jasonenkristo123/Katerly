@@ -44,7 +44,7 @@ export default function MainNavbar() {
                         </div>
                     </div>
                 </div>
-                <button onClick={alertHandleLogout} className="text-red-800 flex items-center bg-gray-100 cursor-pointer">
+                <button onClick={alertHandleLogout} className="text-red-800 flex items-center cursor-pointer">
                     <LogOut size={31} className="mt-1" />
                 </button>
             </div>

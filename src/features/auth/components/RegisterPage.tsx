@@ -45,7 +45,7 @@ export default function RegisterPage() {
             timer: 3000,
             timerProgressBar: true,
             didClose: () => {
-                router.push("/dashboard");
+                router.push('/onboarding')
             }
         })
     }
@@ -68,7 +68,7 @@ export default function RegisterPage() {
     }
 
     return (
-        <section className="flex min-h-screen w-full bg-white font-['Poppins']">
+        <section className="flex h-screen w-full bg-white font-['Poppins']">
 
             <div className="flex w-full flex-col md:items-center px-6 py-8 lg:w-1/2 lg:px-12">
 
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                     </Link>
                 </div>
 
-                <div className="flex flex-col mt-40">
+                <div className="flex flex-col mt-20 xl:mt-40">
                     <div className="mb-6">
                         <h1 className="text-4xl lg:text-5xl font-bold text-black">
                             Buat akun
