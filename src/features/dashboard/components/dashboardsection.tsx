@@ -1,124 +1,85 @@
 "use client";
 
-import React from 'react';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler,
-    ChartOptions,
-    ChartData,
-} from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
-import {
-    TrendingUp,
-    TrendingDown,
-    Clock,
-    Plus,
-    ChevronDown,
-    Calculator
-} from 'lucide-react';
-import Link from 'next/link';
+import { useState, useRef, useEffect, useMemo, Suspense } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useGetProfile } from '@/features/settings/hooks/profileHooks';
+import type { MonthOption } from '../types/dashboard-types';
+import DashboardContent from './DashboardContent';
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-    Filler
-);
+function buildMonthOptions(startYear: number, startMonth: number): MonthOption[] {
+    const MONTH_NAMES = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-indexed
+
+    const options: MonthOption[] = [];
+    let y = startYear;
+    let m = startMonth;
+
+    while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+        options.push({
+            label: `${MONTH_NAMES[m - 1]} ${y}`,
+            month: m,
+            year: y,
+        });
+        m++;
+        if (m > 12) {
+            m = 1;
+            y++;
+        }
+    }
+
+    return options;
+}
 
 const DashboardSection = () => {
-    // Mock Data for Line Chart
-    const lineData: ChartData<'line'> = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-        datasets: [
-            {
-                label: 'Keuntungan',
-                data: [30, 45, 40, 55, 60, 75, 95],
-                borderColor: '#0fa05c',
-                backgroundColor: (context) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                    gradient.addColorStop(0, 'rgba(15, 160, 92, 0.2)');
-                    gradient.addColorStop(1, 'rgba(15, 160, 92, 0)');
-                    return gradient;
-                },
-                fill: false,
-                tension: 0.4,
-                pointRadius: 0,
-                borderWidth: 4,
-            },
-        ],
-    };
+    const now = new Date();
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const dropdownListRef = useRef<HTMLDivElement>(null);
 
-    const lineOptions: ChartOptions<'line'> = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false,
-            },
-            tooltip: {
-                enabled: true,
-            },
-        },
-        scales: {
-            x: {
-                display: true,
-            },
-            y: {
-                display: true,
-            },
-        },
-    };
+    // Get user profile to determine registration date
+    const { data: profileResponse } = useGetProfile();
 
-    // Mock Data for Bar Chart
-    const barData: ChartData<'bar'> = {
-        labels: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-        datasets: [
-            {
-                label: 'Menu',
-                data: [40, 65, 45, 45, 80, 85, 35, 68, 80, 80],
-                backgroundColor: '#5AC18B',
-                borderRadius: 6,
-                maxBarThickness: 60
-            },
-        ],
-    };
+    // Build month options from registration date to current month
+    const monthOptions = useMemo(() => {
+        const profileData = profileResponse?.data;
+        if (profileData?.createdAt) {
+            const regDate = new Date(profileData.createdAt);
+            return buildMonthOptions(regDate.getFullYear(), regDate.getMonth() + 1);
+        }
+        // Fallback: only show current month if no profile data yet
+        return buildMonthOptions(now.getFullYear(), now.getMonth() + 1);
+    }, [profileResponse]);
 
-    const barOptions: ChartOptions<'bar'> = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false,
-            },
-        },
-        datasets: {
-            bar: {
-                maxBarThickness: 60
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsDropdownOpen(false);
             }
-        },
-        scales: {
-            x: {
-                display: false,
-            },
-            y: {
-                display: false,
-            },
-        },
-    };
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Auto-scroll dropdown to the bottom (current month) when opened
+    useEffect(() => {
+        if (isDropdownOpen && dropdownListRef.current) {
+            dropdownListRef.current.scrollTop = dropdownListRef.current.scrollHeight;
+        }
+    }, [isDropdownOpen]);
+
+    // Get label for the currently selected month
+    const selectedLabel = monthOptions.find(
+        (o) => o.year === selectedYear && o.month === selectedMonth
+    )?.label ?? 'Pilih bulan';
 
     return (
         <div className="space-y-8 w-full mx-auto">
@@ -128,103 +89,48 @@ const DashboardSection = () => {
                     <h1 className="text-3xl font-poppins-700 text-black">Hai, Katering Sejahtera!</h1>
                     <p className="text-graytext-secondary mt-1">Ringkasan singkat usaha catering hari ini.</p>
                 </div>
-                <button className="flex items-center gap-2 bg-green-primary text-white px-5 py-2.5 rounded-full font-semibold hover:bg-green-bitdark transition-colors w-fit">
-                    Bulan ini <ChevronDown size={20} />
-                </button>
-            </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    { label: 'Pendapatan', value: 'Rp 18.000.000', trend: '+20%', isPositive: true },
-                    { label: 'Keuntungan Bersih', value: 'Rp 18.000.000', trend: '+20%', isPositive: true },
-                    { label: 'Margin Rata-Rata', value: '30,3%', trend: '-1,4%', isPositive: false },
-                    { label: 'Nota Dibuat', value: '24', trend: '+20%', isPositive: true },
-                ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex flex-col gap-2">
-                        <p className="text-graytext-secondary text-sm font-medium">{stat.label}</p>
-                        <p className="text-2xl font-bold text-black">{stat.value}</p>
-                        <div className={`flex items-center gap-1 w-fit px-2 py-0.5 rounded-md text-[10px] font-bold ${stat.isPositive ? 'bg-green-superlight text-green-primary' : 'bg-bg-primary text-brown'
-                            }`}>
-                            {stat.isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            {stat.trend}
+                {/* Month Dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setIsDropdownOpen((prev) => !prev)}
+                        className="flex items-center gap-2 bg-green-primary text-white px-5 py-2.5 rounded-full font-semibold hover:bg-green-bitdark transition-colors w-fit"
+                    >
+                        {selectedLabel}
+                        <ChevronDown
+                            size={20}
+                            className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        />
+                    </button>
+
+                    {isDropdownOpen && (
+                        <div ref={dropdownListRef} className="absolute right-0 mt-2 w-56 max-h-64 overflow-y-auto bg-white rounded-2xl shadow-lg shadow-gray-300 border border-gray-100 z-50 py-2">
+                            {monthOptions.map((option) => {
+                                const isActive =
+                                    option.year === selectedYear && option.month === selectedMonth;
+                                return (
+                                    <button
+                                        key={`${option.year}-${option.month}`}
+                                        onClick={() => {
+                                            setSelectedYear(option.year);
+                                            setSelectedMonth(option.month);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        className={`w-full text-left px-5 py-2.5 text-sm font-medium transition-colors ${isActive
+                                                ? 'bg-green-superlight text-green-primary font-bold'
+                                                : 'text-graytext-primary hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Charts and Lists Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Keuntungan Chart */}
-                <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex flex-col h-[400px]">
-                    <h3 className="text-xl font-bold text-black mb-6">Keuntungan Bulan Ini</h3>
-                    <div className="flex-1 w-full">
-                        <Line data={lineData} options={lineOptions} />
-                    </div>
-                </div>
-
-                {/* Menu Terbaru */}
-                <div className="bg-white p-8 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex flex-col">
-                    <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-xl font-bold text-black">Menu Terbaru</h3>
-                        <Clock size={20} className="text-graytext-secondary" />
-                    </div>
-                    <div className="space-y-6">
-                        {[1, 2, 3, 4].map((item) => (
-                            <div key={item} className="flex items-center justify-between">
-                                <span className="font-bold text-graytext-primary">Nasi Box</span>
-                                <span className="text-sm text-graytext-secondary">200 pesanan bulan ini</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Menu Paling Menguntungkan */}
-                <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex flex-col h-[400px]">
-                    <h3 className="text-xl font-bold text-black mb-6">Menu Paling Menguntungkan</h3>
-                    <div className="flex-1 w-full">
-                        <Bar data={barData} options={barOptions} />
-                    </div>
-                </div>
-
-                {/* Quotation Terbaru */}
-                <div className="bg-white p-8 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex flex-col">
-                    <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-xl font-bold text-black">Quotation Terbaru</h3>
-                        <Link href="/history" className="text-sm font-bold text-green-primary">Lihat Semua</Link>
-                    </div>
-                    <div className="space-y-4">
-                        {[1, 2, 3].map((item) => (
-                            <div key={item} className="p-4 bg-gray-50/50 rounded-2xl flex items-center justify-between">
-                                <div>
-                                    <p className="font-bold text-graytext-primary">Nasi Box</p>
-                                    <p className="text-[10px] text-graytext-secondary">INV-0231 • Hari ini</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-graytext-primary">Rp 1.500.000</p>
-                                    <div className="flex items-center gap-1 bg-green-superlight text-green-primary px-1.5 py-0.5 rounded text-[8px] font-bold ml-auto w-fit">
-                                        <TrendingUp size={10} /> +20%
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    )}
                 </div>
             </div>
 
-            {/* Footer Action */}
-            <div className="bg-white p-6 rounded-3xl shadow-md shadow-gray-300 border border-gray-50 flex items-center justify-between group cursor-pointer hover:border-green-primary/30 transition-all">
-                <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-green-superlight flex items-center justify-center text-green-primary">
-                        <Calculator size={32} />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-black">Tambah Nota</h3>
-                        <p className="text-graytext-secondary">Hitung & Kirim dalam 2 menit</p>
-                    </div>
-                </div>
-                <Plus size={32} className="text-graytext-secondary group-hover:text-green-primary transition-colors" />
-            </div>
+            <DashboardContent year={selectedYear} month={selectedMonth} />
         </div>
     );
 };
