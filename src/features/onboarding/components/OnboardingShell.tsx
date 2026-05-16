@@ -17,16 +17,13 @@ import CompletionStep from "./CompletionStep";
 export default function OnboardingShell() {
   const [step, setStep] = useState(1);
   const router = useRouter();
-
-  // Hook untuk API
   const { mutate: saveProfile, isPending } = useSaveBusinessProfile();
 
-  // State Utama (Pusat Data)
   const [formData, setFormData] = useState<OnboardingData>({
     namaUsaha: "",
     provinsi: "",
     noWhatsapp: "",
-    email: "admin@katerly.com", // Default value
+    email: "admin@katerly.com",
     alamat: "Alamat belum diatur",
     marginDefault: 30,
     matauang: "IDR",
@@ -38,8 +35,22 @@ export default function OnboardingShell() {
     setFormData((prev) => ({ ...prev, ...fields }));
   };
 
-  // Handle navigasi & Eksekusi API di Step terakhir
+  // FUNGSI VALIDASI PER STEP
+  const isStepValid = () => {
+    if (step === 1) {
+      return (
+        formData.namaUsaha.trim() !== "" &&
+        formData.provinsi.trim() !== "" &&
+        formData.noWhatsapp.trim().length >= 10 // Minimal 10 digit sesuai Zod
+      );
+    }
+    // Step 2 (basa-basi), Step 3 (slider otomatis ada isi), Step 4 (selesai) selalu true
+    return true;
+  };
+
   const handleNext = () => {
+    if (!isStepValid()) return; // Mencegah bypass paksa
+
     if (step < 4) {
       setStep((p) => p + 1);
     } else {
@@ -53,13 +64,12 @@ export default function OnboardingShell() {
     if (step > 1) setStep((p) => p - 1);
   };
 
-  // Daftar Step
   const renderStep = () => {
     switch (step) {
       case 1:
         return <BusinessInfoStep data={formData} updateData={updateFormData} />;
       case 2:
-        return <ProductTypeStep />; // Step basa-basi (UI Only)
+        return <ProductTypeStep />;
       case 3:
         return <ProfitMarginStep data={formData} updateData={updateFormData} />;
       case 4:
@@ -72,7 +82,7 @@ export default function OnboardingShell() {
   return (
     <section className="min-h-screen bg-[#F7F7F7]">
       <header className="border-b border-gray-200 bg-white px-8 py-5">
-        <h1 className="font-anonymous-700 text-4xl text-green-bold">
+        <h1 className="font-anonymous-700 text-4xl text-green-primary">
           Kater<span className="text-black">Ly</span>
         </h1>
       </header>
@@ -88,6 +98,7 @@ export default function OnboardingShell() {
                 onNext={handleNext}
                 onBack={handleBack}
                 isLoading={isPending}
+                isValid={isStepValid()} // <-- Kirim status validasi ke tombol
               />
             }
           >
