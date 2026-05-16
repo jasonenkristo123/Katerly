@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Poppins, Anonymous_Pro} from "next/font/google";
+import { Poppins, Anonymous_Pro } from "next/font/google";
 import "./globals.css";
+import QueryProvider from "@/shared/provider/queryProvider";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400","500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-poppins"
 })
 
@@ -31,7 +33,11 @@ export default function RootLayout({
       className={`${anonymousPro.variable} ${poppins.variable} scroll-smooth`}
       suppressHydrationWarning
     >
-      <body className={poppins.className}>{children}</body>
+      <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+        <QueryProvider>
+          <body className={poppins.className}>{children}</body>
+        </QueryProvider>
+      </GoogleOAuthProvider>
     </html>
   );
 }
