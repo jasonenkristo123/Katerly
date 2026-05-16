@@ -33,7 +33,7 @@ export default function HistorySection() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    const { data: historyData, isPending, error } = useGetHistoryInvoice();
+    const { data: historyData, isPending } = useGetHistoryInvoice();
 
     const filteredData = (historyData?.data?.notas || []).filter((item: NotaItem) =>
         item.namaClient.toLowerCase().includes(searchQuery.toLowerCase()) ||
