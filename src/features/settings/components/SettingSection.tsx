@@ -1,23 +1,27 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Upload, Trash2, CreditCard } from "lucide-react";
 import Image from "next/image";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import { useGetProfile, useSetProfile, useUploadLogo } from "../hooks/profileHooks";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+const mySwal = withReactContent(Swal);
 
-interface BusinessProfile {
-    namaUsaha: string;
-    namaPemilik: string;
-    email: string;
-    noWhatsApp: string;
-    alamat: string;
-}
+const profileSchema = z.object({
+    namaUsaha: z.string().min(1, "Nama usaha wajib diisi"),
+    namaPemilik: z.string().optional(),
+    email: z.string().email("Email tidak valid").or(z.literal("")).optional(),
+    noWhatsApp: z.string().optional(),
+    alamat: z.string().optional(),
+    marginDefault: z.number().min(0).max(100),
+});
 
-interface AccountInfo {
-    namaLengkap: string;
-    email: string;
-}
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 type TabKey = "profil" | "akun" | "pricing" | "berlangganan";
 
@@ -26,52 +30,109 @@ interface Tab {
     label: string;
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
 const tabs: Tab[] = [
     { key: "profil", label: "Profil Usaha" },
-    { key: "akun", label: "Akun & Keamanan" },
     { key: "pricing", label: "Default Pricing" },
     { key: "berlangganan", label: "Berlangganan" },
 ];
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
 export default function SettingSection() {
     const [activeTab, setActiveTab] = useState<TabKey>("profil");
 
-    // ── Business Profile State ──
-    const [businessProfile, setBusinessProfile] = useState<BusinessProfile>({
-        namaUsaha: "",
-        namaPemilik: "",
-        email: "",
-        noWhatsApp: "",
-        alamat: "",
-    });
-
-    // ── Account Info State ──
-    const [accountInfo] = useState<AccountInfo>({
-        namaLengkap: "",
-        email: "",
-    });
-
-    // ── Logo State ──
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ── Default Pricing State ──
-    const [marginDefault, setMarginDefault] = useState(35);
+    const { data: profileData } = useGetProfile();
+    const setProfile = useSetProfile();
+    const uploadLogo = useUploadLogo();
 
-    // ── Handlers ──
+    const {
+        register,
+        handleSubmit,
+        watch,
+        reset,
+        formState: { errors }
+    } = useForm<ProfileFormValues>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            namaUsaha: profileData?.namaUsaha || "",
+            namaPemilik: "",
+            email: profileData?.email || "",
+            noWhatsApp: profileData?.noWhatsapp || "",
+            alamat: profileData?.alamat || "",
+            marginDefault: profileData?.marginDefault || 30,
+        }
+    });
 
-    const handleProfileChange = (field: keyof BusinessProfile, value: string) => {
-        setBusinessProfile((prev) => ({ ...prev, [field]: value }));
+    const currentMarginDefault = watch("marginDefault");
+    
+    const getLogoUrl = (path: string | null | undefined) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('data:image')) return path;
+        
+        // Use a relative path so the Next.js proxy (in next.config.ts) handles it, bypassing CORS
+        return path.startsWith('/') ? path : `/${path}`;
+    };
+    
+    const displayLogo = logoPreview || getLogoUrl(profileData?.logoPath);
+
+    useEffect(() => {
+        if (profileData) {
+            reset({
+                namaUsaha: profileData.namaUsaha || "",
+                namaPemilik: profileData.namaPemilik || "",
+                email: profileData.email || "",
+                noWhatsApp: profileData.noWhatsapp || "",
+                alamat: profileData.alamat || "",
+                marginDefault: profileData.marginDefault ?? 35,
+            });
+        }
+    }, [profileData, reset]);
+
+    const onSubmit = (data: ProfileFormValues) => {
+        const profilePayload = {
+            namaUsaha: data.namaUsaha,
+            email: data.email,
+            noWhatsapp: data.noWhatsApp,
+            alamat: data.alamat,
+            marginDefault: data.marginDefault,
+        };
+        console.log("Saving profile payload:", profilePayload);
+        setProfile.mutate(profilePayload, {
+            onSuccess: () => {
+                console.log("Profile saved successfully");
+            }
+        });
+
+        if (logoFile) {
+            console.log("Uploading logo file:", logoFile.name);
+            uploadLogo.mutate(logoFile, {
+                onSuccess: () => {
+                    console.log("Logo uploaded successfully");
+                    setLogoFile(null); // Clear logo file state after successful upload
+                }
+            });
+        }
     };
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Check if file is larger than 1MB (1 * 1024 * 1024 bytes)
+            if (file.size > 1 * 1024 * 1024) {
+                mySwal.fire({
+                    icon: 'error',
+                    title: 'File Terlalu Besar',
+                    text: 'Maksimal ukuran logo adalah 1MB! Server menolak file yang lebih besar.',
+                });
+                // Reset input
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+                return;
+            }
+            
             setLogoFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -93,7 +154,6 @@ export default function SettingSection() {
         fileInputRef.current?.click();
     };
 
-    // ── Initials for fallback avatar ──
     const getInitials = (name: string) => {
         return name
             .split(" ")
@@ -103,11 +163,11 @@ export default function SettingSection() {
             .slice(0, 2);
     };
 
-    const initials = getInitials(businessProfile.namaUsaha);
+    const initials = getInitials(watch("namaUsaha") || "");
 
     return (
         <div className="w-full">
-            {/* ─── Header ─────────────────────────────────────────────────── */}
+
             <div className="mb-6">
                 <h1 className="text-3xl md:text-4xl font-poppins-700 text-graytext-primary mb-1">
                     Pengaturan
@@ -117,7 +177,6 @@ export default function SettingSection() {
                 </p>
             </div>
 
-            {/* ─── Tab Navigation ────────────────────────────────────────── */}
             <div className="border-b border-gray-200 mb-8 overflow-x-auto ">
                 <nav className="flex gap-1 min-w-max" aria-label="Settings tabs">
                     {tabs.map((tab) => (
@@ -143,12 +202,8 @@ export default function SettingSection() {
                 </nav>
             </div>
 
-            {/* ─── Tab Content ───────────────────────────────────────────── */}
-
-            {/* ── PROFIL USAHA ── */}
             {activeTab === "profil" && (
                 <div className="space-y-10">
-                    {/* Business Profile Form */}
                     <section>
                         <h2 className="text-lg md:text-xl font-poppins-700 text-graytext-primary mb-1">
                             Profil Usaha
@@ -166,13 +221,11 @@ export default function SettingSection() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={businessProfile.namaUsaha}
-                                        onChange={(e) =>
-                                            handleProfileChange("namaUsaha", e.target.value)
-                                        }
+                                        {...register("namaUsaha")}
                                         placeholder="Katering Mama"
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-white"
                                     />
+                                    {errors.namaUsaha && <p className="text-red-500 text-xs mt-1">{errors.namaUsaha.message}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-poppins-600 text-graytext-primary mb-1.5">
@@ -180,13 +233,11 @@ export default function SettingSection() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={businessProfile.namaPemilik}
-                                        onChange={(e) =>
-                                            handleProfileChange("namaPemilik", e.target.value)
-                                        }
+                                        {...register("namaPemilik")}
                                         placeholder="Bu Una"
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-white"
                                     />
+                                    {errors.namaPemilik && <p className="text-red-500 text-xs mt-1">{errors.namaPemilik.message}</p>}
                                 </div>
                             </div>
 
@@ -198,13 +249,11 @@ export default function SettingSection() {
                                     </label>
                                     <input
                                         type="email"
-                                        value={businessProfile.email}
-                                        onChange={(e) =>
-                                            handleProfileChange("email", e.target.value)
-                                        }
+                                        {...register("email")}
                                         placeholder="email@gmail.com"
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-white"
                                     />
+                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-poppins-600 text-graytext-primary mb-1.5">
@@ -212,13 +261,11 @@ export default function SettingSection() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={businessProfile.noWhatsApp}
-                                        onChange={(e) =>
-                                            handleProfileChange("noWhatsApp", e.target.value)
-                                        }
+                                        {...register("noWhatsApp")}
                                         placeholder="nomor anda"
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-white"
                                     />
+                                    {errors.noWhatsApp && <p className="text-red-500 text-xs mt-1">{errors.noWhatsApp.message}</p>}
                                 </div>
                             </div>
 
@@ -229,13 +276,11 @@ export default function SettingSection() {
                                 </label>
                                 <input
                                     type="text"
-                                    value={businessProfile.alamat}
-                                    onChange={(e) =>
-                                        handleProfileChange("alamat", e.target.value)
-                                    }
+                                    {...register("alamat")}
                                     placeholder="jalan kebayoran"
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-white"
                                 />
+                                {errors.alamat && <p className="text-red-500 text-xs mt-1">{errors.alamat.message}</p>}
                             </div>
                         </div>
                     </section>
@@ -250,11 +295,11 @@ export default function SettingSection() {
                             <div className="flex flex-col sm:flex-row items-center gap-6">
                                 {/* Logo Preview / Initials Avatar */}
                                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-green-primary flex items-center justify-center overflow-hidden shrink-0 shadow-md">
-                                    {logoPreview ? (
+                                    {displayLogo ? (
                                         <Image
-                                            src={logoPreview}
-                                            width={50}
-                                            height={50}
+                                            src={displayLogo}
+                                            width={80}
+                                            height={80}
                                             alt="Logo preview"
                                             className="w-full h-full object-cover"
                                         />
@@ -298,47 +343,6 @@ export default function SettingSection() {
                 </div>
             )}
 
-            {/* ── AKUN & KEAMANAN ── */}
-            {activeTab === "akun" && (
-                <div className="space-y-10">
-                    <section>
-                        <h2 className="text-lg md:text-xl font-poppins-700 text-graytext-primary mb-1">
-                            Informasi Akun
-                        </h2>
-                        <p className="text-graytext-secondary text-sm font-poppins-400 mb-6">
-                            Detail informasi akun Anda.
-                        </p>
-
-                        <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-8 shadow-sm">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-xs font-poppins-600 text-graytext-primary mb-1.5">
-                                        Nama Lengkap
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={accountInfo.namaLengkap}
-                                        readOnly
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-secondary bg-gray-50 cursor-not-allowed"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-poppins-600 text-graytext-primary mb-1.5">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={accountInfo.email}
-                                        readOnly
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-secondary bg-gray-50 cursor-not-allowed"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            )}
-
             {/* ── DEFAULT PRICING ── */}
             {activeTab === "pricing" && (
                 <div className="space-y-10">
@@ -357,7 +361,7 @@ export default function SettingSection() {
                                     Margin Default
                                 </span>
                                 <span className="text-2xl md:text-3xl font-poppins-700 text-green-primary">
-                                    {marginDefault}%
+                                    {currentMarginDefault}%
                                 </span>
                             </div>
 
@@ -367,11 +371,10 @@ export default function SettingSection() {
                                     type="range"
                                     min={0}
                                     max={100}
-                                    value={marginDefault}
-                                    onChange={(e) => setMarginDefault(Number(e.target.value))}
+                                    {...register("marginDefault", { valueAsNumber: true })}
                                     className="w-full h-2 rounded-full appearance-none cursor-pointer accent-green-primary"
                                     style={{
-                                        background: `linear-gradient(to right, var(--color-green-primary) 0%, var(--color-green-primary) ${marginDefault}%, #e5e7eb ${marginDefault}%, #e5e7eb 100%)`,
+                                        background: `linear-gradient(to right, var(--color-green-primary) 0%, var(--color-green-primary) ${currentMarginDefault}%, #e5e7eb ${currentMarginDefault}%, #e5e7eb 100%)`,
                                     }}
                                 />
                             </div>
@@ -399,7 +402,7 @@ export default function SettingSection() {
                                         AKTIF
                                     </span>
                                     <h3 className="text-2xl md:text-3xl font-poppins-700 text-white mb-1">
-                                        Katerly Pro
+                                        Katerly <span>{profileData?.premium ? 'Pro' : 'Starter'}</span>
                                     </h3>
                                     <p className="text-white/70 text-xs md:text-sm font-poppins-400">
                                         Diperbarui otomatis pada 27 Mei 2026
@@ -442,6 +445,18 @@ export default function SettingSection() {
                     </section>
                 </div>
             )}
+
+            {/* ── SAVE BUTTON ── */}
+            <div className="flex justify-end mt-8 mb-8">
+                <button
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={setProfile.isPending || uploadLogo.isPending}
+                    className="px-6 py-2.5 bg-green-primary text-white rounded-xl text-sm font-poppins-600 hover:bg-green-primary/90 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                    {setProfile.isPending || uploadLogo.isPending ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+            </div>
+
         </div>
     );
 }
