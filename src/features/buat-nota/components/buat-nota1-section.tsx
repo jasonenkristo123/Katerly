@@ -75,6 +75,11 @@ export default function BuatNota1Section() {
             return;
         }
 
+        if (customerInfo.whatsapp.length > 20) {
+            alert("Nomor WhatsApp tidak boleh lebih dari 20 karakter");
+            return;
+        }
+
         const payload = {
             namaClient: customerInfo.nama,
             noWaClient: customerInfo.whatsapp,
@@ -194,6 +199,7 @@ export default function BuatNota1Section() {
                                 <label className="text-sm font-poppins-600 text-graytext-primary ml-1">No. WhatsApp</label>
                                 <input
                                     type="text"
+                                    maxLength={20}
                                     value={customerInfo.whatsapp}
                                     onChange={(e) => setCustomerInfo({ ...customerInfo, whatsapp: e.target.value })}
                                     placeholder="0812-xxxx-xxxx"
