@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { deleteIngridient, getAllIngridients, postIngridient, putIngridient } from "../service/bahanbaku-api"
+import { deleteIngridient, getAllIngridients, postIngridient, putIngridient, searchIngrediens } from "../service/bahanbaku-api"
 import { TDeleteIngridients, TPostIngridients, TPutIngridients } from "../types/bahanbaku-types"
 
 export const useGetAllIngridients = () => {
@@ -36,5 +36,13 @@ export const useDeleteIngridients = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ingridients'] });
         }
+    })
+}
+
+export const useSearchIngrediens = (keyword: string) => {
+    return useQuery({
+        queryKey: ['ingridients', 'search', keyword],
+        queryFn: () => searchIngrediens(keyword),
+        enabled: !!keyword
     })
 }

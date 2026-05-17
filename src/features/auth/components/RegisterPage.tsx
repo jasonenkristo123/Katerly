@@ -72,14 +72,6 @@ export default function RegisterPage() {
 
             <div className="flex w-full flex-col md:items-center px-6 py-8 lg:w-1/2 lg:px-12">
 
-                <div className="mb-2">
-                    <Link href="/">
-                        <h1 className="font-anonymous-700 text-4xl lg:text-5xl text-green-bold">
-                            Kater<span className="text-black">Ly</span>
-                        </h1>
-                    </Link>
-                </div>
-
                 <div className="flex flex-col mt-20 xl:mt-40">
                     <div className="mb-6">
                         <h1 className="text-4xl lg:text-5xl font-bold text-black">

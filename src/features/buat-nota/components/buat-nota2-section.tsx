@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useRef } from "react";
-import { Link2, Download, MessageCircle, CheckCircle, ChevronLeft } from "lucide-react";
+import { Link2, Download, MessageCircle, CheckCircle, ChevronLeft, Loader2 } from "lucide-react";
 import Button from "@/shared/components/reusable/Button";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useGetNoteById, useDownloadPdf } from "../hooks/notes-hooks";
+import { useGetProfile } from "@/features/settings/hooks/profileHooks";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ interface ApiInvoice {
     pajakPersen: number;
 }
 
-// ─── Placeholder Data ──────────────────────────────────────────────────────────
+
 
 const mockInvoice: InvoiceData = {
     invoiceNumber: "INV-0231",
@@ -129,17 +130,39 @@ export default function NotaPreview() {
     const invoiceId = idParam ? Number(idParam) : null;
     const { data: responseData, isPending } = useGetNoteById(invoiceId);
     const { mutate: downloadPdfMutate, isPending: isDownloading } = useDownloadPdf(invoiceId as number);
+    
+    const { data: profile, isPending: isProfilePending } = useGetProfile();
 
     const apiInvoice = responseData?.data as ApiInvoice | undefined;
 
-    const invoice: InvoiceData = apiInvoice ? {
+    if (isPending || isProfilePending) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-10 h-10 animate-spin text-green-primary" />
+                <p className="mt-4 text-gray-500 font-poppins-500">Memuat nota...</p>
+            </div>
+        );
+    }
+
+    if (!apiInvoice) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <p className="text-gray-500 font-poppins-500">Data nota tidak ditemukan.</p>
+                <Button variant="secondary" onClick={() => router.push('/history')} className="mt-4">
+                    Kembali ke Riwayat
+                </Button>
+            </div>
+        );
+    }
+
+    const invoice: InvoiceData = {
         invoiceNumber: apiInvoice.nomorInvoice || `INV-${apiInvoice.notaId}`,
         tanggalDibuat: new Date(apiInvoice.createdAt || new Date()).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
         berlakuHingga: new Date(new Date(apiInvoice.createdAt || new Date()).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
-        namaUsaha: "KaterLy",
+        namaUsaha: profile?.namaUsaha || "KaterLy",
         tipeUsaha: "Catering",
-        alamat: "Alamat Usaha Anda",
-        teleponUsaha: "0812-3456-7890",
+        alamat: profile?.alamat || "Alamat belum diatur",
+        teleponUsaha: profile?.noWhatsapp || "Telepon belum diatur",
         namaPelanggan: apiInvoice.namaClient,
         acara: apiInvoice.namaAcara,
         teleponPelanggan: apiInvoice.noWaClient,
@@ -149,13 +172,13 @@ export default function NotaPreview() {
         items: apiInvoice.items?.map((item: ApiInvoiceItem) => ({
             id: item.notaItemId.toString(),
             nama: item.namaResep,
-            deskripsi: "Item menu",
+            deskripsi: "Sesuai daftar pesanan",
             qty: item.jumlahPorsi,
             harga: item.hargaJualPerPorsi
         })) || [],
         pajak: apiInvoice.pajakPersen || 0,
         catatan: "Terima kasih atas pesanan Anda.",
-    } : mockInvoice;
+    };
 
     const subtotal = invoice.items.reduce(
         (sum, item) => sum + item.qty * item.harga,

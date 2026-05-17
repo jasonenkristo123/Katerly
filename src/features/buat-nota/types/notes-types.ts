@@ -5,7 +5,7 @@ export type PostType = {
     namaAcara: string;
     tanggalAcara: string;
     pajakPersen: number;
-    biayaPengantaran: number;
+    biayaPengantaran?: number;
     items: itemsType[];
 }
 

@@ -20,3 +20,8 @@ export const deleteIngridient = async (data: TDeleteIngridients) => {
     const response = await api.delete(`/ingredients/${data.ingredientId}`);
     return response.data;
 }
+
+export const searchIngrediens = async (keyword: string) => {
+    const response = await api.get(`/ingredients/search?keyword=${keyword}`);
+    return response.data;
+}
