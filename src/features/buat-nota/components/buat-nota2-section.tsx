@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useRef } from "react";
-import { Link2, Download, MessageCircle, CheckCircle, ChevronLeft } from "lucide-react";
+import { Link2, Download, MessageCircle, CheckCircle, ChevronLeft, Loader2 } from "lucide-react";
 import Button from "@/shared/components/reusable/Button";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useGetNoteById, useDownloadPdf } from "../hooks/notes-hooks";
+import { useGetProfile } from "@/features/settings/hooks/profileHooks";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +46,26 @@ interface InvoiceData {
     catatan: string;
 }
 
-// ─── Placeholder Data ──────────────────────────────────────────────────────────
+interface ApiInvoiceItem {
+    notaItemId: number;
+    namaResep: string;
+    jumlahPorsi: number;
+    hargaJualPerPorsi: number;
+}
+
+interface ApiInvoice {
+    notaId: number;
+    nomorInvoice: string;
+    createdAt: string;
+    namaClient: string;
+    namaAcara: string;
+    noWaClient: string;
+    tanggalAcara: string;
+    items: ApiInvoiceItem[];
+    pajakPersen: number;
+}
+
+
 
 const mockInvoice: InvoiceData = {
     invoiceNumber: "INV-0231",
@@ -101,7 +123,62 @@ const formatRp = (amount: number) =>
 
 export default function NotaPreview() {
     const invoiceRef = useRef<HTMLDivElement>(null);
-    const invoice = mockInvoice;
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    
+    const idParam = searchParams.get('id');
+    const invoiceId = idParam ? Number(idParam) : null;
+    const { data: responseData, isPending } = useGetNoteById(invoiceId);
+    const { mutate: downloadPdfMutate, isPending: isDownloading } = useDownloadPdf(invoiceId as number);
+    
+    const { data: profile, isPending: isProfilePending } = useGetProfile();
+
+    const apiInvoice = responseData?.data as ApiInvoice | undefined;
+
+    if (isPending || isProfilePending) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-10 h-10 animate-spin text-green-primary" />
+                <p className="mt-4 text-gray-500 font-poppins-500">Memuat nota...</p>
+            </div>
+        );
+    }
+
+    if (!apiInvoice) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <p className="text-gray-500 font-poppins-500">Data nota tidak ditemukan.</p>
+                <Button variant="secondary" onClick={() => router.push('/history')} className="mt-4">
+                    Kembali ke Riwayat
+                </Button>
+            </div>
+        );
+    }
+
+    const invoice: InvoiceData = {
+        invoiceNumber: apiInvoice.nomorInvoice || `INV-${apiInvoice.notaId}`,
+        tanggalDibuat: new Date(apiInvoice.createdAt || new Date()).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
+        berlakuHingga: new Date(new Date(apiInvoice.createdAt || new Date()).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
+        namaUsaha: profile?.namaUsaha || "KaterLy",
+        tipeUsaha: "Catering",
+        alamat: profile?.alamat || "Alamat belum diatur",
+        teleponUsaha: profile?.noWhatsapp || "Telepon belum diatur",
+        namaPelanggan: apiInvoice.namaClient,
+        acara: apiInvoice.namaAcara,
+        teleponPelanggan: apiInvoice.noWaClient,
+        tanggalAcara: new Date(apiInvoice.tanggalAcara || new Date()).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
+        jumlahPorsi: apiInvoice.items?.reduce((acc: number, item: ApiInvoiceItem) => acc + item.jumlahPorsi, 0) || 0,
+        waktuPengiriman: "Menyesuaikan",
+        items: apiInvoice.items?.map((item: ApiInvoiceItem) => ({
+            id: item.notaItemId.toString(),
+            nama: item.namaResep,
+            deskripsi: "Sesuai daftar pesanan",
+            qty: item.jumlahPorsi,
+            harga: item.hargaJualPerPorsi
+        })) || [],
+        pajak: apiInvoice.pajakPersen || 0,
+        catatan: "Terima kasih atas pesanan Anda.",
+    };
 
     const subtotal = invoice.items.reduce(
         (sum, item) => sum + item.qty * item.harga,
@@ -114,19 +191,66 @@ export default function NotaPreview() {
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
+        alert("Link berhasil disalin!");
     };
 
     const handleDownloadPDF = () => {
-        // TODO: integrate @react-pdf/renderer
-        console.log("Download PDF");
+        if (!invoiceId) {
+            alert("ID Nota tidak ditemukan.");
+            return;
+        }
+
+        downloadPdfMutate(undefined, {
+            onSuccess: (data: unknown) => {
+                try {
+                    let url: string;
+                    if (data instanceof Blob) {
+                        url = window.URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+                    } else if (typeof data === 'string' && data.startsWith('http')) {
+                        // In case backend actually returns a URL string
+                        window.open(data, '_blank');
+                        return;
+                    } else {
+                        // Fallback blob creation for raw data
+                        url = window.URL.createObjectURL(new Blob([data as BlobPart], { type: 'application/pdf' }));
+                    }
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `Nota_${invoice.invoiceNumber}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.parentNode?.removeChild(link);
+                    
+                    if (data instanceof Blob || !(typeof data === 'string' && data.startsWith('http'))) {
+                        window.URL.revokeObjectURL(url);
+                    }
+                } catch (error) {
+                    console.error("Error processing PDF blob", error);
+                    alert("Gagal mengunduh PDF. Format tidak sesuai.");
+                }
+            }
+        });
     };
 
-    const handleShareWhatsApp = () => {
-        // TODO: Web Share API / WhatsApp deep-link
-        const text = encodeURIComponent(
-            `Nota #${invoice.invoiceNumber} untuk ${invoice.namaPelanggan} – ${invoice.tanggalAcara}`
-        );
-        window.open(`https://wa.me/${invoice.teleponPelanggan.replace(/\D/g, "")}?text=${text}`, "_blank");
+    const handleShareWhatsApp = async () => {
+        const text = `Halo ${invoice.namaPelanggan},\n\nBerikut adalah tautan rincian nota untuk acara ${invoice.acara}.\nTotal Tagihan: ${formatRp(total)}\n\nLihat Nota Online:\n${window.location.href}\n\nTerima kasih!`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Nota ${invoice.invoiceNumber}`,
+                    text: text,
+                    url: window.location.href
+                });
+            } catch {
+                const waUrl = `https://wa.me/${invoice.teleponPelanggan.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
+                window.open(waUrl, "_blank");
+            }
+        } else {
+            const waUrl = `https://wa.me/${invoice.teleponPelanggan.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, "_blank");
+        }
     };
 
     // ── Render ─────────────────────────────────────────────────────────────────
@@ -351,10 +475,11 @@ export default function NotaPreview() {
                             </button>
                             <button
                                 onClick={handleDownloadPDF}
-                                className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 text-graytext-primary rounded-2xl font-poppins-600 text-sm hover:bg-gray-50 transition-all active:scale-95"
+                                disabled={isDownloading}
+                                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-200 text-graytext-primary rounded-2xl font-poppins-600 text-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 <Download size={18} />
-                                Unduh PDF
+                                {isDownloading ? "Mengunduh..." : "Unduh PDF"}
                             </button>
                             <button
                                 onClick={handleCopyLink}
@@ -366,7 +491,10 @@ export default function NotaPreview() {
                         </div>
 
                         {/* Back to edit */}
-                        <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-graytext-secondary text-sm font-poppins-500 hover:text-graytext-primary transition-colors">
+                        <button 
+                            onClick={() => router.back()}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-graytext-secondary text-sm font-poppins-500 hover:text-graytext-primary transition-colors"
+                        >
                             <ChevronLeft size={16} />
                             Kembali ke Edit
                         </button>

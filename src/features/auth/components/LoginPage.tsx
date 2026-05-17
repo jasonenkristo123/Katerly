@@ -12,14 +12,13 @@ import withReactContent from "sweetalert2-react-content";
 import Swal from "sweetalert2";
 import { AxiosError } from "axios";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { ProfileChecking } from "@/shared/utils/profileChecking";
+import { getProfile } from "@/features/settings/service/profileApi";
 
 export default function LoginPage() {
     const router = useRouter();
     const { mutateAsync } = useLogin();
     const { mutateAsync: mutateAsyncGoogle } = useLoginGoogle();
     const [uxMode, setUxMode] = useState<"popup" | "redirect">("popup");
-    const isProfileExist = ProfileChecking();
 
     useEffect(() => {
         // Use setTimeout to avoid 'setState synchronously within an effect' warning
@@ -49,12 +48,21 @@ export default function LoginPage() {
 
     const onSubmit = async (data: TLoginSchema) => {
         try {
-            await mutateAsync(data, {
-                onSuccess: () => {
-                    successAlert();
-                    reset();
+            await mutateAsync(data);
+            
+            // Check if profile exists after successful login
+            let hasBusinessProfile = false;
+            try {
+                const profile = await getProfile();
+                if (profile && Object.keys(profile).length > 0) {
+                    hasBusinessProfile = true;
                 }
-            })
+            } catch {
+                console.log("No profile found, routing to onboarding");
+            }
+            
+            successAlert(hasBusinessProfile);
+            reset();
         } catch (err: unknown) {
             const error = err as AxiosError<{ message: string }>
             setError("root", {
@@ -63,7 +71,7 @@ export default function LoginPage() {
         }
     }
 
-    const successAlert = () => {
+    const successAlert = (hasBusinessProfile: boolean) => {
         mySwal.fire({
             title: "Login Berhasil!",
             icon: "success",
@@ -72,7 +80,7 @@ export default function LoginPage() {
             timer: 3000,
             timerProgressBar: true,
             didClose: () => {
-                if (isProfileExist) {
+                if (hasBusinessProfile) {
                     router.push("/dashboard")
                 } else {
                     router.push("/onboarding");
@@ -95,11 +103,20 @@ export default function LoginPage() {
     const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
         try {
             const token = credentialResponse.credential || "";
-            await mutateAsyncGoogle(token, {
-                onSuccess: () => {
-                    successAlert();
+            await mutateAsyncGoogle(token);
+            
+            // Check if profile exists after successful Google login
+            let hasBusinessProfile = false;
+            try {
+                const profile = await getProfile();
+                if (profile && Object.keys(profile).length > 0) {
+                    hasBusinessProfile = true;
                 }
-            })
+            } catch {
+                console.log("No profile found, routing to onboarding");
+            }
+            
+            successAlert(hasBusinessProfile);
         } catch {
             errorAlert("Coba Login Kembali");
         }
@@ -111,14 +128,6 @@ export default function LoginPage() {
         <section className="flex h-screen w-full bg-white font-['Poppins']">
 
             <div className="flex w-full flex-col md:items-center px-6 py-8 lg:w-1/2 lg:px-12">
-
-                <div className="mb-2">
-                    <Link href="/">
-                        <h1 className="font-anonymous-700 text-4xl lg:text-5xl text-green-bold">
-                            Kater<span className="text-black">Ly</span>
-                        </h1>
-                    </Link>
-                </div>
 
                 <div className="flex flex-col mt-20 xl:mt-40">
 

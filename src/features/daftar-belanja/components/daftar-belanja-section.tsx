@@ -1,79 +1,149 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Search, ShoppingCart } from "lucide-react";
+import { ClipboardList, Search, Loader2 } from "lucide-react";
+import Swal from "sweetalert2";
 
 import ShoppingRecipeCard from "./shopping-recipe-card";
 import ShoppingSummaryCard from "./shopping-summary-card";
 import ShoppingChecklist from "./shopping-checklist";
+import PaginationPage from "@/shared/components/reusable/PaginationPage";
+import {
+  useShoppingLists,
+  useDeleteShoppingList,
+  useUpdateItemStatus,
+} from "../hooks/useShoppingList";
 
-interface IngredientItem {
-  id: number;
-  nama: string;
-  qty: string;
-  harga: number;
-}
+import {
+  ShoppingListItem,
+  ShoppingListResponse,
+} from "../schemas/shoppingListSchema";
 
+// Shape internal untuk komponen
 interface ShoppingRecipe {
   id: number;
   nama: string;
   bahanCount: number;
-  porsi: number;
   totalHarga: number;
   tanggal: string;
-  ingredients: IngredientItem[];
+  items: ShoppingListItem[];
 }
 
+// ==========================================
+// HELPER: FORMAT TANGGAL
+// ==========================================
+
+function formatTanggal(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+// ==========================================
+// KOMPONEN UTAMA
+// ==========================================
+
 export default function DaftarBelanjaSection() {
-  const [recipes] = useState<ShoppingRecipe[]>([
-    {
-      id: 1,
-      nama: "Nasi Box Ayam Geprek",
-      bahanCount: 9,
-      porsi: 120,
-      totalHarga: 1745000,
-      tanggal: "19 Dec 2026",
-      ingredients: [
-        { id: 1, nama: "Ayam Potong", qty: "15 kg", harga: 200000 },
-        { id: 2, nama: "Beras Premium", qty: "20 kg", harga: 350000 },
-        { id: 3, nama: "Minyak Goreng", qty: "5 liter", harga: 120000 },
-        { id: 4, nama: "Tepung Terigu", qty: "5 kg", harga: 75000 },
-        { id: 5, nama: "Cabai Merah", qty: "3 kg", harga: 150000 },
-        { id: 6, nama: "Bawang Putih", qty: "2 kg", harga: 60000 },
-        { id: 7, nama: "Garam", qty: "1 kg", harga: 15000 },
-        { id: 8, nama: "Penyedap Rasa", qty: "500 gr", harga: 25000 },
-        { id: 9, nama: "Sambal Sachet", qty: "120 pcs", harga: 750000 },
-      ],
-    },
-    {
-      id: 2,
-      nama: "Nasi Kuning Komplit",
-      bahanCount: 7,
-      porsi: 80,
-      totalHarga: 1250000,
-      tanggal: "25 Dec 2026",
-      ingredients: [
-        { id: 10, nama: "Beras Premium", qty: "15 kg", harga: 262500 },
-        { id: 11, nama: "Santan Kelapa", qty: "10 liter", harga: 200000 },
-        { id: 12, nama: "Kunyit", qty: "1 kg", harga: 45000 },
-        { id: 13, nama: "Ayam Suwir", qty: "8 kg", harga: 320000 },
-        { id: 14, nama: "Telur Ayam", qty: "80 butir", harga: 240000 },
-        { id: 15, nama: "Kacang Tanah", qty: "3 kg", harga: 105000 },
-        { id: 16, nama: "Minyak Goreng", qty: "3 liter", harga: 77500 },
-      ],
-    },
-  ]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const { data: apiResponse, isLoading } = useShoppingLists();
+  const { mutate: deleteShoppingList } = useDeleteShoppingList();
 
   const [selectedRecipe, setSelectedRecipe] = useState<ShoppingRecipe | null>(
     null,
   );
-
   const [checkedItems, setCheckedItems] = useState<number[]>([]);
 
+  // Mapping data API ke shape internal
+  const recipes: ShoppingRecipe[] = apiResponse?.data
+    ? apiResponse.data
+        .map((item: ShoppingListResponse) => ({
+          id: item.shoppingListId,
+          nama: item.namaResep?.join(", ") || "Daftar Belanja",
+          bahanCount: item.items?.length ?? 0,
+          totalHarga: item.totalHarga ?? 0,
+          tanggal: formatTanggal(item.createdAt),
+          items: item.items || [],
+        }))
+        .sort((a: ShoppingRecipe, b: ShoppingRecipe) => b.id - a.id) // Terbaru di depan
+    : [];
+
+  // Filter pencarian
+  const filteredRecipes = recipes.filter((recipe) =>
+    recipe.nama.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage);
+  const safePage = Math.max(1, Math.min(currentPage, totalPages || 1));
+
+  if (currentPage !== safePage) {
+    setCurrentPage(safePage);
+  }
+
+  const paginatedRecipes = filteredRecipes.slice(
+    (safePage - 1) * itemsPerPage,
+    safePage * itemsPerPage,
+  );
+
+  const { mutate: updateItemStatus } = useUpdateItemStatus();
+
+  // Handlers
   function handleToggleIngredient(id: number) {
+    const isCurrentlyChecked = checkedItems.includes(id);
+    const newStatus = !isCurrentlyChecked;
+
+    // Optimistic UI update
     setCheckedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      isCurrentlyChecked ? prev.filter((item) => item !== id) : [...prev, id],
     );
+
+    // Backend update
+    updateItemStatus({ itemId: id, isBought: newStatus });
+  }
+
+  function handleDeleteConfirm(id: number, nama: string) {
+    Swal.fire({
+      title: "Hapus Daftar Belanja?",
+      text: `Apakah Anda yakin ingin menghapus daftar belanja "${nama}"? Tindakan ini tidak dapat dibatalkan.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#EF4444",
+      cancelButtonColor: "#6B7280",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteShoppingList(id, {
+          onSuccess: () => {
+            Swal.fire({
+              icon: "success",
+              title: "Berhasil Dihapus!",
+              text: `Daftar belanja "${nama}" telah dihapus.`,
+              timer: 2000,
+              showConfirmButton: false,
+            });
+          },
+          onError: () => {
+            Swal.fire({
+              icon: "error",
+              title: "Gagal Menghapus",
+              text: "Terjadi kesalahan saat menghapus daftar belanja.",
+              confirmButtonColor: "#EF4444",
+            });
+          },
+        });
+      }
+    });
   }
 
   return (
@@ -81,7 +151,6 @@ export default function DaftarBelanjaSection() {
       {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-4xl font-poppins-700 text-black">Daftar Belanja</h1>
-
         <p className="text-graytext-secondary mt-2">
           Berisi daftar belanja anda yang dapat menjadi catatan belanja anda
         </p>
@@ -96,7 +165,6 @@ export default function DaftarBelanjaSection() {
               <h2 className="text-3xl font-poppins-700 text-black">
                 {selectedRecipe.nama}
               </h2>
-
               <p className="text-graytext-secondary mt-1">
                 Breakdown bahan belanja
               </p>
@@ -139,18 +207,26 @@ export default function DaftarBelanjaSection() {
             />
 
             <ShoppingSummaryCard
-              title="UNTUK ACARA"
+              title="TANGGAL DIBUAT"
               value={selectedRecipe.tanggal}
-              subtitle={`${selectedRecipe.porsi} porsi total`}
+              subtitle="Daftar belanja resep"
             />
           </div>
 
           {/* Checklist */}
-          <ShoppingChecklist
-            ingredients={selectedRecipe.ingredients}
-            checkedItems={checkedItems}
-            onToggle={handleToggleIngredient}
-          />
+          {selectedRecipe.items.length > 0 ? (
+            <ShoppingChecklist
+              ingredients={selectedRecipe.items}
+              checkedItems={checkedItems}
+              onToggle={handleToggleIngredient}
+            />
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-3xl p-12 text-center shadow-sm">
+              <p className="text-graytext-secondary font-poppins-400">
+                Belum ada item bahan baku dalam daftar belanja ini.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -173,6 +249,11 @@ export default function DaftarBelanjaSection() {
 
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder="Cari Daftar Belanja..."
                 className="
                   w-full
@@ -194,8 +275,16 @@ export default function DaftarBelanjaSection() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex h-60 w-full flex-col items-center justify-center text-gray-400">
+              <Loader2 className="animate-spin mb-2" size={32} />
+              <p className="font-poppins-400">Memuat daftar belanja...</p>
+            </div>
+          )}
+
           {/* Empty State */}
-          {recipes.length === 0 && (
+          {!isLoading && paginatedRecipes.length === 0 && (
             <div
               className="
                 bg-white
@@ -233,7 +322,9 @@ export default function DaftarBelanjaSection() {
                   text-graytext-primary
                 "
               >
-                Belum Ada Daftar Belanja
+                {searchQuery
+                  ? "Daftar Belanja Tidak Ditemukan"
+                  : "Belum Ada Daftar Belanja"}
               </h2>
 
               <div className="flex flex-col items-center justify-center p-2 mt-4 bg-cream-op rounded-2xl text-brown">
@@ -245,48 +336,43 @@ export default function DaftarBelanjaSection() {
                     max-w-md
                   "
                 >
-                  Tambahkan resep terlebih dahulu untuk membuat daftar belanja
-                  catering
+                  {searchQuery
+                    ? "Coba cari dengan kata kunci lain"
+                    : 'Klik tombol "Pakai" pada resep untuk membuat daftar belanja otomatis'}
                 </p>
               </div>
-
-              <button
-                className="
-                  mt-8
-                  bg-green-primary
-                  text-white
-                  px-7 py-3
-                  rounded-full
-                  flex
-                  items-center
-                  gap-2
-                  hover:bg-green-bitdark
-                  transition-all
-                  font-poppins-600
-                  hover:cursor-pointer
-                "
-              >
-                <ShoppingCart size={18} />
-                Buat Daftar Belanja
-              </button>
             </div>
           )}
 
           {/* Cards */}
-          {recipes.length > 0 && (
-            <div className="flex flex-wrap gap-6 mt-8">
-              {recipes.map((recipe) => (
+          {!isLoading && paginatedRecipes.length > 0 && (
+            <div className="flex flex-wrap gap-6">
+              {paginatedRecipes.map((recipe) => (
                 <ShoppingRecipeCard
                   key={recipe.id}
                   recipe={recipe}
                   onBelanja={() => {
                     setSelectedRecipe(recipe);
-                    setCheckedItems([]);
+                    setCheckedItems(
+                      recipe.items
+                        .filter((i) => i.isBought)
+                        .map((i) => i.shoppingListItemId),
+                    );
                   }}
+                  onDelete={() => handleDeleteConfirm(recipe.id, recipe.nama)}
                 />
               ))}
             </div>
           )}
+
+          {/* Pagination */}
+          <PaginationPage
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+            totalItems={filteredRecipes.length}
+            itemsPerPage={itemsPerPage}
+          />
         </>
       )}
     </div>

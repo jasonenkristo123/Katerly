@@ -1,11 +1,14 @@
 
-import BuatNota1Section from "@/features/buat-nota/buat-nota1-section";
+import BuatNota1Section from "@/features/buat-nota/components/buat-nota1-section";
+import FadeIn from "@/shared/animations/FadeIn";
 
 export default function BuatNotaPageSection() {
     return (
         <section className="min-h-screen bg-white py-8">
-            <BuatNota1Section />
+            <FadeIn>
+                <BuatNota1Section />
+            </FadeIn>
         </section>
     );
 }
-
+

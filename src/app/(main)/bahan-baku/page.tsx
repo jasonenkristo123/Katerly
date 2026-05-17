@@ -1,10 +1,13 @@
-import BahanBaku from "@/features/bahan-baku/bahanbaku-sections";
+import BahanBaku from "@/features/bahan-baku/components/bahanbaku-sections";
+import FadeIn from "@/shared/animations/FadeIn";
 
 
 export default function BahanBakuPage() {
     return (
         <section>
-            <BahanBaku />
+            <FadeIn>
+                <BahanBaku />
+            </FadeIn>
         </section>
     )
 }

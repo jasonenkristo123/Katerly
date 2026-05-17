@@ -2,27 +2,31 @@ type Props = {
   step: number;
   onNext: () => void;
   onBack: () => void;
-  isLoading?: boolean; // Tambahkan ini
+  isLoading?: boolean;
+  isValid?: boolean;
 };
 
 export default function NavigationButtons({
   step,
   onNext,
   onBack,
-  isLoading = false, // Default-nya false
+  isLoading = false,
+  isValid = true,
 }: Props) {
   const isLastStep = step === 4;
+  const isButtonDisabled = isLoading || !isValid;
 
   return (
-    <div className="flex items-center justify-between">
-      <div>
+    <div className="flex items-center justify-between w-full">
+      {/* Container Tombol Kembali */}
+      <div className="min-w-[100px]">
         {step > 1 && (
           <button
             type="button"
             onClick={onBack}
-            disabled={isLoading} // Jangan biarkan back saat loading
-            className={`text-sm text-gray-500 transition hover:text-black cursor-pointer ${
-              isLoading ? "opacity-50 cursor-not-allowed" : ""
+            disabled={isLoading}
+            className={`text-sm text-gray-400 font-poppins-400 transition hover:text-black ${
+              isLoading ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
             }`}
           >
             ← Kembali
@@ -30,24 +34,22 @@ export default function NavigationButtons({
         )}
       </div>
 
+      {/* Tombol Lanjut / Buka Dashboard */}
       <button
         type="button"
         onClick={onNext}
-        disabled={isLoading} // Cegah double-click saat kirim data
-        className={`cursor-pointer rounded-full bg-green-primary px-6 py-3 text-sm font-medium text-white shadow-md transition hover:opacity-90 active:scale-[0.98] ${
-          isLoading ? "opacity-70 cursor-not-allowed" : ""
+        disabled={isButtonDisabled}
+        className={`rounded-full bg-green-primary px-8 py-3 text-sm font-poppins-600 text-white shadow-md transition active:scale-[0.98] ${
+          isButtonDisabled
+            ? "opacity-40 cursor-not-allowed"
+            : "cursor-pointer hover:opacity-90"
         }`}
       >
-        {isLoading ? (
-          <span className="flex items-center gap-2">
-            {/* Kamu bisa ganti ini dengan icon spinner jika ada */}
-            Menyimpan...
-          </span>
-        ) : isLastStep ? (
-          "Buka Dashboard"
-        ) : (
-          "Lanjut →"
-        )}
+        {isLoading
+          ? "Menyimpan..."
+          : isLastStep
+            ? "Buka Dashboard"
+            : "Lanjut →"}
       </button>
     </div>
   );

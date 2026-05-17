@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { 
-    LayoutDashboard, 
-    Beef, 
-    BookPlus, 
-    ShoppingCart, 
-    Receipt, 
-    History, 
+import {
+    LayoutDashboard,
+    Beef,
+    BookPlus,
+    ShoppingCart,
+    Receipt,
+    History,
     Settings,
     Menu,
     X,
@@ -20,36 +20,43 @@ const sidebarData = [
         icon: LayoutDashboard,
         name: "Dashboard",
         href: "/dashboard",
+        tourId: "tour-dashboard"
     },
     {
         icon: Beef,
         name: "Bahan Baku",
         href: "/bahan-baku",
+        tourId: "tour-bahan-baku"
     },
     {
         icon: BookPlus,
         name: "Tambah Resep",
         href: "/tambah-resep",
+        tourId: "tour-tambah-resep"
     },
     {
         icon: ShoppingCart,
         name: "Daftar Belanja",
         href: "/daftar-belanja",
+        tourId: "tour-daftar-belanja"
     },
     {
         icon: Receipt,
         name: "Buat Nota",
         href: "/buat-nota",
+        tourId: "tour-buat-nota"
     },
     {
         icon: History,
         name: "Riwayat Transaksi",
         href: "/history",
+        tourId: "tour-history"
     },
     {
         icon: Settings,
         name: "Pengaturan Akun",
         href: "/settings",
+        tourId: "tour-settings"
     }
 ]
 
@@ -62,7 +69,7 @@ export default function SideBarPage() {
     return (
         <>
             {/* Mobile Toggle Button */}
-            <button 
+            <button
                 onClick={toggleSidebar}
                 className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md text-green-primary"
             >
@@ -71,7 +78,7 @@ export default function SideBarPage() {
 
             {/* Backdrop for mobile */}
             {isOpen && (
-                <div 
+                <div
                     className="lg:hidden fixed inset-0 bg-black/50 z-40"
                     onClick={toggleSidebar}
                 />
@@ -96,16 +103,17 @@ export default function SideBarPage() {
                     {sidebarData.map((item) => {
                         const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
                         const Icon = item.icon;
-                        
+
                         return (
-                            <Link 
-                                href={item.href} 
+                            <Link
+                                href={item.href}
                                 key={item.name}
+                                id={item.tourId}
                                 onClick={() => setIsOpen(false)}
                                 className={`
                                     flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                                    ${isActive 
-                                        ? "bg-green-primary text-white shadow-lg shadow-green-primary/20" 
+                                    ${isActive
+                                        ? "bg-green-primary text-white shadow-lg shadow-green-primary/20"
                                         : "text-gray-500 hover:bg-green-50 hover:text-green-primary"}
                                 `}
                             >
@@ -121,19 +129,20 @@ export default function SideBarPage() {
                     <div className="bg-bg-advertise rounded-3xl p-5 relative overflow-hidden group">
                         {/* Decorative circle */}
                         <div className="absolute -top-10 -right-10 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all" />
-                        
+
                         <p className="text-white/80 text-xs font-poppins-400 mb-1">Paket Starter</p>
                         <h3 className="text-white font-poppins-700 text-lg mb-2">Tingkatkan ke Pro</h3>
                         <p className="text-white/90 text-[11px] font-poppins-400 mb-4 leading-relaxed">
                             Nota tanpa batas untuk maksimalkan usahamu
                         </p>
-                        
-                        <Button
-                            variant="secondary"
-                            className="w-full bg-white text-green-primary hover:bg-gray-100 font-poppins-600 py-2.5 rounded-2xl shadow-sm text-sm"
-                        >
-                            Upgrade
-                        </Button>
+                        <Link href="/subscription">
+                            <Button
+                                variant="secondary"
+                                className="w-full bg-white text-green-primary hover:bg-gray-100 font-poppins-600 py-2.5 rounded-2xl shadow-sm text-sm"
+                            >
+                                Upgrade
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </aside>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import Button from "../reusable/Button";
+import FadeIn from "@/shared/animations/FadeIn";
 
 const navbarMenu = [
     {
@@ -26,8 +27,8 @@ export default function NavbarHome() {
     const [activeNav, setActiveNav] = useState("");
 
     return (
-        <>
-            <nav className=" hidden w-full bg-white md:flex flex-row justify-between items-center px-12 py-6 fixed z-999">
+        <FadeIn delay={0.1} className="fixed top-0 w-full z-[999]">
+            <nav className=" hidden w-full bg-white md:flex flex-row justify-between items-center px-12 py-6">
                 <div>
                     <Link href="/home" className="cursor-pointer">
                         <h1 className="font-anonymous-700 text-3xl lg:text-4xl text-green-bold  xl:text-[56px]">
@@ -59,7 +60,7 @@ export default function NavbarHome() {
             </nav>
 
             {/* mobile navbar */}
-            <nav className="w-full md:hidden bg-white flex flex-col items-center fixed z-999 px-12 py-6">
+            <nav className="w-full md:hidden bg-white flex flex-col items-center px-12 py-6">
                 <div className="flex items-center justify-between w-full">
                     <div>
                         <h1 className="font-anonymous-700 text-3xl text-green-bold lg:text-4xl xl:text-[56px]">
@@ -101,6 +102,6 @@ export default function NavbarHome() {
                     </div>
                 )}
             </nav>
-        </>
+        </FadeIn>
     )
 }

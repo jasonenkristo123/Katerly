@@ -45,12 +45,6 @@ export default function PriceSectionPage() {
     return (
         <section id="harga" className="bg-white min-h-screen w-full py-44 flex justify-center ">
             <div className="flex flex-col items-center gap-4">
-                <div className="flex gap-3 px-6 bg-cream rounded-full xl:max-w-[216px] items-center justify-center py-2">
-                    <div className="bg-brown rounded-full w-[8px] h-[8px] xl:w-[10px] xl:h-[10px]" />
-                    <p className="font-poppins-500 text-brown text-[16px]">
-                        Harga Sederhana
-                    </p>
-                </div>
                 <h1 className="font-poppins-700 text-black text-xl text-center sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl mt-3 sm:mb-3">
                     Mulai gratis, upgrade saat siap.
                 </h1>
