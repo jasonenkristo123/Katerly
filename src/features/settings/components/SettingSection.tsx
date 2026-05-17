@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Trash2, CreditCard } from "lucide-react";
+import { Upload, Trash2, Receipt } from "lucide-react";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +9,9 @@ import * as z from "zod";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { useGetProfile, useSetProfile, useUploadLogo } from "../hooks/profileHooks";
+import { useGetActiveSubscription, useGetSubscriptionHistory } from "@/features/subscription/hooks/subscription-hooks";
+import Link from "next/link";
 
-const mySwal = withReactContent(Swal);
 
 const profileSchema = z.object({
     namaUsaha: z.string().min(1, "Nama usaha wajib diisi"),
@@ -44,9 +45,11 @@ export default function SettingSection() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data: profileData } = useGetProfile();
+    const { data: activeSub } = useGetActiveSubscription();
+    const { data: subHistory } = useGetSubscriptionHistory();
     const setProfile = useSetProfile();
     const uploadLogo = useUploadLogo();
-
+    const mySwal = withReactContent(Swal);
     const {
         register,
         handleSubmit,
@@ -58,33 +61,34 @@ export default function SettingSection() {
         defaultValues: {
             namaUsaha: profileData?.namaUsaha || "",
             namaPemilik: "",
-            email: profileData?.email || "",
+            email: profileData?.email,
             noWhatsApp: profileData?.noWhatsapp || "",
-            alamat: profileData?.alamat || "",
+            alamat: profileData?.alamat === "Alamat belum diatur" ? "" : (profileData?.alamat || ""),
             marginDefault: profileData?.marginDefault || 30,
         }
     });
 
     const currentMarginDefault = watch("marginDefault");
-    
+
     const getLogoUrl = (path: string | null | undefined) => {
         if (!path) return null;
         if (path.startsWith('http') || path.startsWith('data:image')) return path;
-        
+
         // Use a relative path so the Next.js proxy (in next.config.ts) handles it, bypassing CORS
         return path.startsWith('/') ? path : `/${path}`;
     };
-    
+
     const displayLogo = logoPreview || getLogoUrl(profileData?.logoPath);
+    console.log(profileData?.email);
 
     useEffect(() => {
         if (profileData) {
             reset({
                 namaUsaha: profileData.namaUsaha || "",
                 namaPemilik: profileData.namaPemilik || "",
-                email: profileData.email || "",
+                email: profileData.email === "admin@katerly.com" ? "" : (profileData.email || ""),
                 noWhatsApp: profileData.noWhatsapp || "",
-                alamat: profileData.alamat || "",
+                alamat: profileData.alamat === "Alamat belum diatur" ? "" : (profileData.alamat || ""),
                 marginDefault: profileData.marginDefault ?? 35,
             });
         }
@@ -102,6 +106,12 @@ export default function SettingSection() {
         setProfile.mutate(profilePayload, {
             onSuccess: () => {
                 console.log("Profile saved successfully");
+                mySwal.fire({
+                    title: "Profil berhasil diubah!",
+                    icon: "success",
+                    showConfirmButton: false,
+                    timer: 1000,
+                })
             }
         });
 
@@ -132,7 +142,7 @@ export default function SettingSection() {
                 }
                 return;
             }
-            
+
             setLogoFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -185,10 +195,9 @@ export default function SettingSection() {
                             onClick={() => setActiveTab(tab.key)}
                             className={`
                                 relative px-4 py-3 text-sm font-poppins-500 transition-colors whitespace-nowrap cursor-pointer
-                                ${
-                                    activeTab === tab.key
-                                        ? "text-green-primary"
-                                        : "text-graytext-secondary hover:text-graytext-primary"
+                                ${activeTab === tab.key
+                                    ? "text-green-primary"
+                                    : "text-graytext-secondary hover:text-graytext-primary"
                                 }
                             `}
                         >
@@ -249,9 +258,10 @@ export default function SettingSection() {
                                     </label>
                                     <input
                                         type="email"
-                                        {...register("email")}
+                                        disabled
+                                        value={profileData?.email || ""}
                                         placeholder="email@gmail.com"
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-white"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-poppins-400 text-graytext-primary focus:outline-none focus:ring-2 focus:ring-green-primary/20 focus:border-green-primary transition-all bg-gray-100 cursor-not-allowed"
                                     />
                                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                                 </div>
@@ -402,45 +412,55 @@ export default function SettingSection() {
                                         AKTIF
                                     </span>
                                     <h3 className="text-2xl md:text-3xl font-poppins-700 text-white mb-1">
-                                        Katerly <span>{profileData?.premium ? 'Pro' : 'Starter'}</span>
+                                        Katerly <span>{(profileData?.premium || activeSub) ? 'Pro' : 'Starter'}</span>
                                     </h3>
                                     <p className="text-white/70 text-xs md:text-sm font-poppins-400">
-                                        Diperbarui otomatis pada 27 Mei 2026
+                                        {activeSub?.endDate ? `Berlaku sampai ${new Date(activeSub.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}` : '-'}
                                     </p>
                                 </div>
-                                <button className="px-6 py-2.5 bg-white text-green-primary rounded-full text-sm font-poppins-600 hover:shadow-md transition-all cursor-pointer shrink-0">
-                                    Kelola
-                                </button>
+                                <Link href="/subscription">
+                                    <button className="px-6 py-2.5 bg-white text-green-primary rounded-full text-sm font-poppins-600 hover:shadow-md transition-all cursor-pointer shrink-0">
+                                        Kelola
+                                    </button>
+                                </Link>
                             </div>
                         </div>
                     </section>
 
-                    {/* Payment Method */}
+                    {/* Payment History */}
                     <section>
                         <h2 className="text-lg md:text-xl font-poppins-700 text-graytext-primary mb-6">
-                            Metode Pembayaran
+                            Riwayat Pembayaran Terbaru
                         </h2>
 
                         <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-8 shadow-sm">
-                            <div className="flex items-center gap-4">
-                                {/* Card Icon */}
-                                <div className="w-12 h-8 bg-[#1a1f71] rounded-md flex items-center justify-center shrink-0">
-                                    <span className="text-white text-[10px] font-poppins-700 tracking-widest">
-                                        VISA
-                                    </span>
+                            {subHistory ? (
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center shrink-0">
+                                            <Receipt size={20} className="text-green-primary" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-poppins-600 text-graytext-primary">
+                                                Pembayaran Paket Pro
+                                            </p>
+                                            <p className="text-xs font-poppins-400 text-graytext-secondary">
+                                                Order ID: {subHistory.midtransOrderId} • {new Date(subHistory.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-poppins-600 text-graytext-primary">
+                                            Rp {subHistory.amount.toLocaleString('id-ID')}
+                                        </p>
+                                        <p className={`text-xs font-poppins-500 uppercase ${subHistory.status === 'settlement' || subHistory.status === 'capture' ? 'text-green-primary' : 'text-orange-500'}`}>
+                                            {subHistory.status}
+                                        </p>
+                                    </div>
                                 </div>
-
-                                {/* Card Details */}
-                                <div>
-                                    <p className="text-sm font-poppins-600 text-graytext-primary flex items-center gap-1.5">
-                                        <CreditCard size={14} className="text-graytext-secondary" />
-                                        •••• 4242
-                                    </p>
-                                    <p className="text-xs font-poppins-400 text-graytext-secondary">
-                                        Berlaku s/d 12/27
-                                    </p>
-                                </div>
-                            </div>
+                            ) : (
+                                <p className="text-sm font-poppins-400 text-graytext-secondary text-center py-4">Belum ada riwayat pembayaran.</p>
+                            )}
                         </div>
                     </section>
                 </div>

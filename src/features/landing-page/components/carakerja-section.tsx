@@ -7,12 +7,6 @@ export default function CaraKerjaSection() {
     return (
         <section id="cara-kerja" className="min-h-screen w-full flex flex-col items-center justify-center py-20 px-6 overflow-hidden bg-bg-carakerja">
             <div className="flex flex-col items-center text-center gap-6 mb-16 md:mb-24">
-                <div className="flex items-center gap-3 px-4 py-1.5 rounded-full border border-green-primary/20 bg-green-superlight shadow-sm">
-                    <div className="rounded-full bg-green-primary w-2 h-2 animate-pulse" />
-                    <p className="font-poppins-600 text-sm md:text-base text-green-primary tracking-wide ">
-                        Cara Kerja
-                    </p>
-                </div>
 
                 <h1 className="font-poppins-700 text-3xl md:text-4xl lg:text-5xl text-black max-w-4xl leading-tight">
                     <span className="text-green-primary">Tiga</span> langkah, harga siap kirim.

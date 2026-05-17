@@ -81,7 +81,6 @@ export default function BuatNota1Section() {
             namaAcara: customerInfo.acara,
             tanggalAcara: customerInfo.tanggal || new Date().toISOString().split('T')[0],
             pajakPersen: hasTax ? taxPercentage : 0,
-            biayaPengantaran: 50000, // Or whatever input value you want
             items: items.map(item => ({
                 recipeId: item.recipeId,
                 jumlahPorsi: item.jumlahPorsi

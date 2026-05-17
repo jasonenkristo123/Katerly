@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, Fragment } from "react";
+import React, { useState, Fragment, useEffect } from "react";
 import { Search, Plus, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import Button from "@/shared/components/reusable/Button";
 import ModalParent from "@/shared/components/modal/ModalParent";
 import TambahBahanChildModal from "@/shared/components/modal/modal-children/tambah-bahan";
 import PaginationPage from "@/shared/components/reusable/PaginationPage";
 import { TResponseAllIngridients } from "../types/bahanbaku-types";
-import { useGetAllIngridients, usePutIngridients, usePostIngridients, useDeleteIngridients } from "../hooks/bahanbaku-hooks";
+import { useGetAllIngridients, usePutIngridients, usePostIngridients, useDeleteIngridients, useSearchIngrediens } from "../hooks/bahanbaku-hooks";
+import Swal from "sweetalert2";
+import { isAxiosError } from "axios";
 
 export type IngredientFormValues = {
     nama: string;
@@ -21,8 +23,23 @@ export default function BahanBaku() {
     const [selectedItem, setSelectedItem] = useState<TResponseAllIngridients | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+            setCurrentPage(1); // Reset page on search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     const itemsPerPage = 10;
-    const { data: ingridientsData = [], isLoading } = useGetAllIngridients();
+    const { data: allData = [], isLoading: isLoadingAll } = useGetAllIngridients();
+    const { data: searchData = [], isLoading: isLoadingSearch } = useSearchIngrediens(debouncedSearchQuery);
+    
+    const ingridientsData = debouncedSearchQuery ? searchData : allData;
+    const isLoading = debouncedSearchQuery ? isLoadingSearch : isLoadingAll;
     const { mutateAsync: createIngridients } = usePostIngridients();
     const { mutateAsync: updateIngridients } = usePutIngridients();
     const { mutateAsync: deleteIngridients } = useDeleteIngridients();
@@ -45,7 +62,6 @@ export default function BahanBaku() {
     };
 
     const handleFormSubmit = async (formData: IngredientFormValues) => {
-        console.log("Parent receiving data:", formData);
         try {
             if (selectedItem) {
                 await updateIngridients({
@@ -63,8 +79,7 @@ export default function BahanBaku() {
             }
             setIsFormModalOpen(false);
         } catch (error) {
-            console.error("Failed to save ingredient:", error);
-            throw error; // Rethrow to let the form handle the error state
+            throw error;
         }
     };
 
@@ -75,8 +90,38 @@ export default function BahanBaku() {
             await deleteIngridients({ ingredientId: selectedItem.ingredientId });
             setIsDeleteModalOpen(false);
             setSelectedItem(null);
-        } catch (error) {
-            console.error("Failed to delete ingredient:", error);
+            Swal.fire({
+                icon: "success",
+                title: "Berhasil!",
+                text: "Bahan baku berhasil dihapus.",
+                timer: 2000,
+                showConfirmButton: false,
+            });
+        } catch (error: unknown) {
+            let errorMessage = "Terjadi kesalahan yang tidak diketahui";
+            if (isAxiosError(error)) {
+                errorMessage = error.response?.data?.message || error.message || "";
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            
+            setIsDeleteModalOpen(false);
+            
+            if (errorMessage.includes("foreign key constraint") || errorMessage.includes("recipe_ingredients")) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Bahan Baku Sedang Digunakan!",
+                    text: "Bahan ini tidak bisa dihapus karena sedang digunakan dalam satu atau lebih resep. Ubah atau hapus resep tersebut terlebih dahulu.",
+                    confirmButtonColor: "#EF4444",
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Gagal Menghapus",
+                    text: "Terjadi kesalahan saat menghapus bahan baku.",
+                    confirmButtonColor: "#EF4444",
+                });
+            }
         }
     };
 
@@ -131,6 +176,8 @@ export default function BahanBaku() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-graytext-secondary" size={20} />
                     <input
                         type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Cari Bahan..."
                         className="w-full pl-12 pr-6 py-2.5 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-primary/10 focus:border-green-primary transition-all font-poppins-400 bg-white"
                     />
@@ -228,7 +275,7 @@ export default function BahanBaku() {
                                                     <span className="hidden sm:inline">Edit</span>
                                                 </button>
 
-                                                {/* Dropdown Menu */}
+
                                                 {activeMenuId !== null && activeMenuId === currentId && (
                                                     <Fragment key={`menu-${currentId || index}`}>
                                                         <div

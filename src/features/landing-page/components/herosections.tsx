@@ -27,12 +27,6 @@ export default function HeroSections() {
     return (
         <section className="bg-hero-gradient w-full min-h-screen pt-36 pb-20 px-6 md:pt-40 md:px-12 lg:pt-48 lg:px-16 xl:pt-[180px] xl:px-[100px] flex flex-col lg:flex-row items-center gap-12 lg:gap-8 xl:gap-0 overflow-hidden">
             <div className="w-full lg:w-1/2 flex flex-col space-y-6 lg:space-y-8">
-                <div className="flex items-center w-max max-w-full gap-3 rounded-full border border-green-bold/30 bg-green-superlight px-3 py-1.5">
-                    <div className="w-[10px] h-[10px] rounded-full bg-green-primary shrink-0" />
-                    <p className="text-[12px] sm:text-[14px] lg:text-[14px] xl:text-[16px] font-poppins-500 text-green-primary truncate">
-                        Khusus untuk UMKM Catering Indonesia
-                    </p>
-                </div>
 
                 <h1 className="text-[36px] sm:text-[48px] lg:text-[48px] xl:text-[64px] font-poppins-700 text-black leading-[1.2] xl:leading-[70px] 2xl:w-[660px]">
                     Hitung <span className="text-green-primary">HPP</span> & <br className="hidden sm:block" />
@@ -53,7 +47,7 @@ export default function HeroSections() {
                         </Button>
                     </Link>
                     <Link href="/login" className="w-full sm:w-auto">
-                        <Button variant="secondary" size="lg" className="w-full sm:w-auto shadow-black/50 shadow-md justify-center">
+                        <Button variant="secondary" size="lg" className="w-full sm:w-auto shadow-black/50 shadow-lg justify-center">
                             Masuk
                         </Button>
                     </Link>

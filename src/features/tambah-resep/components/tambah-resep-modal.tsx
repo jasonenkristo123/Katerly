@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Trash2, X, Loader2, Sparkles } from "lucide-react";
 import Button from "@/shared/components/reusable/Button";
 import Swal from "sweetalert2";
 import {
@@ -58,11 +58,66 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
       : [{ ingredientId: "", quantity: "" }],
   );
 
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  async function handleGenerateAI() {
+    if (!aiPrompt) return;
+    setIsGenerating(true);
+    try {
+      const response = await fetch("/api/generate-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: aiPrompt,
+          availableIngredients: availableIngredients,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal generate resep");
+      }
+
+      const data = await response.json();
+
+      if (data.namaResep) setNamaResep(data.namaResep);
+      if (data.jumlahPorsi) setJumlahPorsi(data.jumlahPorsi.toString());
+      if (data.ingredients && data.ingredients.length > 0) {
+        interface AIGeneratedIngredient {
+          ingredientId: string | number;
+          quantity: string | number;
+        }
+        const mappedIngredients = data.ingredients.map((ing: AIGeneratedIngredient) => ({
+          ingredientId: ing.ingredientId.toString(),
+          quantity: ing.quantity.toString(),
+        }));
+        setIngredients(mappedIngredients);
+        setHppManual("");
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "AI Berhasil!",
+        text: "Resep berhasil digenerate oleh AI.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Generate",
+        text: "Pastikan API Key sudah dikonfigurasi dan kuota tersedia.",
+        confirmButtonColor: "#EF4444",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   const hasSelectedIngredients = ingredients.some(
     (ing) => ing.ingredientId !== "",
   );
 
-  // Bahan baku yang lengkap (sudah pilih bahan DAN sudah isi jumlah)
   const completeIngredients = ingredients.filter(
     (ing) =>
       ing.ingredientId !== "" &&
@@ -224,6 +279,42 @@ export default function TambahResepModal({ onClose, recipeToEdit }: Props) {
           <X size={22} />
         </button>
       </div>
+
+      {!isEditMode && (
+        <div className="mt-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 border border-green-200 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="text-green-primary" size={20} />
+            <h3 className="font-poppins-600 text-green-bold text-sm">
+              Generate dengan AI ✨
+            </h3>
+          </div>
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              type="text"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="Contoh: Buatkan resep Nasi Goreng Spesial untuk 50 porsi"
+              disabled={isGenerating}
+              className="flex-1 border border-green-300 rounded-xl px-4 py-3 outline-none focus:border-green-primary bg-white text-sm disabled:bg-gray-50 font-poppins-400"
+            />
+            <button
+              onClick={handleGenerateAI}
+              disabled={isGenerating || !aiPrompt}
+              className="bg-green-primary text-white px-6 py-3 rounded-xl font-poppins-600 text-sm flex items-center justify-center gap-2 hover:bg-green-bitdark transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
+            >
+              {isGenerating ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Sparkles size={16} />
+              )}
+              {isGenerating ? "Loading..." : "Generate"}
+            </button>
+          </div>
+          <p className="text-xs text-green-700 mt-3 font-poppins-400">
+            AI akan otomatis membuat resep dan memilih bahan baku dari gudang Anda.
+          </p>
+        </div>
+      )}
 
       <div className="mt-8 space-y-6">
         <div>

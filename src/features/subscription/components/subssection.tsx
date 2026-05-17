@@ -1,4 +1,12 @@
+"use client";
 import SvgWrapper from "@/shared/components/reusable/SvgWrapper";
+import { useCreateSubscription, useGetActiveSubscription } from "../hooks/subscription-hooks";
+import Script from "next/script";
+import Swal from "sweetalert2";
+import { isAxiosError } from "axios";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useGetProfile } from "@/features/settings/hooks/profileHooks";
 
 const starterData = [
   {
@@ -39,6 +47,62 @@ const proData = [
 ];
 
 export default function SubsSection() {
+  const router = useRouter();
+  const { data: profile } = useGetProfile();
+  const { data: activeSub } = useGetActiveSubscription();
+  const { mutateAsync: createSubscription } = useCreateSubscription();
+  const [activeSnapToken, setActiveSnapToken] = useState<string | null>(null);
+
+  const openMidtransModal = (token: string) => {
+    window.snap.pay(token, {
+      onSuccess: (result) => {
+        console.log(result);
+        setActiveSnapToken(null);
+        router.push("/dashboard");
+      },
+      onPending: (result) => {
+        console.log("Pending:", result);
+      },
+      onError: (result) => {
+        console.error("Error:", result);
+      },
+      onClose: () => {
+        console.log("Modal closed by user");
+        // We do NOT clear the token here so they can click the button again
+      }
+    });
+  };
+
+  const handleCreateSubscription = async () => {
+    try {
+      // If we already have a token from a previous click, reuse it
+      if (activeSnapToken) {
+        openMidtransModal(activeSnapToken);
+        return;
+      }
+
+      const res = await createSubscription();
+      setActiveSnapToken(res.snapToken);
+      openMidtransModal(res.snapToken);
+      
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: error.response.data?.message || 'Terjadi kesalahan saat memproses langganan',
+          confirmButtonColor: '#10b981'
+        });
+      } else if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error('An unexpected error occurred:', error);
+      }
+    }
+
+  }
+
+
   return (
     <section className="bg-hero-gradient min-h-screen w-full py-20 flex justify-center">
       <div className="flex flex-col items-center gap-4 mt-10">
@@ -74,10 +138,19 @@ export default function SubsSection() {
               ))}
             </div>
 
-            <button className="bg-white rounded-2xl w-full flex items-center justify-center font-poppins-500 text-black shadow-sm shadow-black border border-gray-200 py-3 mt-auto hover:bg-gray-50 transition-colors duration-150 ease-in-out cursor-pointer">
+            <button
+              disabled
+              className="bg-gray-200 rounded-2xl w-full flex items-center justify-center font-poppins-500 text-gray-500 shadow-[inset_0_6px_10px_rgba(0,0,0,0.15),inset_0_1px_3px_rgba(0,0,0,0.2)] border border-gray-300 py-3 mt-auto cursor-pointer opacity-90"
+            >
               Pilih Starter
             </button>
           </div>
+
+          <Script
+            src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+            strategy="afterInteractive"
+          />
 
           {/* pro card */}
           <div className="bg-green-primary rounded-2xl shadow-gray-700 shadow-xs px-8 py-6 sm:w-[420px] xl:w-[477px] space-y-5 flex flex-col">
@@ -105,9 +178,18 @@ export default function SubsSection() {
               ))}
             </div>
 
-            <button className="bg-white rounded-2xl w-full flex items-center justify-center font-poppins-600 text-green-primary shadow-sm shadow-black border border-white py-3 mt-auto hover:bg-gray-100 transition-colors duration-150 ease-in-out cursor-pointer">
-              Pilih Pro
-            </button>
+            {(profile?.premium || activeSub) ? (
+              <button
+                disabled
+                className="bg-gray-200 rounded-2xl w-full flex items-center justify-center font-poppins-600 text-gray-500 shadow-[inset_0_6px_10px_rgba(0,0,0,0.15),inset_0_1px_3px_rgba(0,0,0,0.2)] border border-gray-300 py-3 mt-auto cursor-not-allowed translate-y-1 opacity-90"
+              >
+                Paket Anda Saat Ini
+              </button>
+            ) : (
+              <button onClick={handleCreateSubscription} className="bg-white rounded-2xl w-full flex items-center justify-center font-poppins-600 text-green-primary shadow-sm shadow-black border border-white py-3 mt-auto hover:bg-gray-100 transition-colors duration-300 ease-in-out cursor-pointer active:translate-y-1 active:shadow-inner">
+                Pilih Pro
+              </button>
+            )}
           </div>
         </div>
       </div>

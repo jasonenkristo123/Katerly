@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChefHat, Plus, Search, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
+import { isAxiosError } from "axios";
 import RecipeCard, { RecipeItem } from "./recipecard";
 import TambahResepModal from "./tambah-resep-modal";
 import PaginationPage from "@/shared/components/reusable/PaginationPage";
@@ -178,6 +179,30 @@ export default function RecipeSection() {
               showConfirmButton: false,
             });
           },
+          onError: (error: unknown) => {
+            let errorMessage = "Terjadi kesalahan yang tidak diketahui";
+            if (isAxiosError(error)) {
+              errorMessage = error.response?.data?.message || error.message || "";
+            } else if (error instanceof Error) {
+              errorMessage = error.message;
+            }
+
+            if (errorMessage.includes("foreign key constraint") || errorMessage.includes("nota_items")) {
+              Swal.fire({
+                icon: "error",
+                title: "Resep Sedang Digunakan!",
+                text: "Resep ini tidak bisa dihapus karena telah digunakan dalam satu atau lebih Nota/Invoice. Anda harus mengubah atau menghapus Nota tersebut terlebih dahulu.",
+                confirmButtonColor: "#EF4444",
+              });
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "Gagal Menghapus",
+                text: "Terjadi kesalahan saat menghapus resep.",
+                confirmButtonColor: "#EF4444",
+              });
+            }
+          }
         });
       }
     });
