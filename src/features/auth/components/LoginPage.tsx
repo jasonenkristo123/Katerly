@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLogin, useLoginGoogle } from "../hooks/auth-hooks";
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { LoginSchema, TLoginSchema } from "../schemas/auth-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +20,7 @@ export default function LoginPage() {
     const { mutateAsync } = useLogin();
     const { mutateAsync: mutateAsyncGoogle } = useLoginGoogle();
     const [uxMode, setUxMode] = useState<"popup" | "redirect">("popup");
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         // Use setTimeout to avoid 'setState synchronously within an effect' warning
@@ -151,6 +153,11 @@ export default function LoginPage() {
                     </div>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="flex w-full max-w-[520px] flex-col gap-4">
+                        {errors.root && (
+                            <div className="bg-red-100 p-3 text-red-700 rounded-xl text-center">
+                                {errors.root.message}
+                            </div>
+                        )}
 
                         <div className="flex flex-col gap-2">
                             <label className="text-lg text-black">
@@ -171,12 +178,25 @@ export default function LoginPage() {
                                 Password
                             </label>
 
-                            <input
-                                type="password"
-                                placeholder="Minimal 8 Karakter"
-                                className="rounded-xl border border-gray-200 px-5 py-3 text-base text-graytext-secondary shadow-sm outline-none focus:border-green-primary"
-                                {...register("password")}
-                            />
+                            <div className="relative w-full">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Minimal 8 Karakter"
+                                    className="rounded-xl border border-gray-200 px-5 py-3 text-base text-graytext-secondary shadow-sm w-full outline-none focus:border-green-primary"
+                                    {...register("password")}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-4"
+                                >
+                                    {showPassword ? (
+                                        <Eye className="h-6 w-6 text-gray-500" />
+                                    ) : (
+                                        <EyeOff className="h-6 w-6 text-gray-500" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
                         </div>
 
