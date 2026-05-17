@@ -238,6 +238,10 @@ export default function RecipeSection() {
           <h2 className="mt-8 text-3xl font-poppins-700 text-graytext-primary">
             {searchQuery ? "Resep Tidak Ditemukan" : "Belum Ada Resep"}
           </h2>
+          <div className="flex justify-center items-center max-w-121 mt-4 p-4 text-graytext-secondary bg-cream-op rounded-3xl">
+            Belum ada resep yang kamu buat, tambahkan resep dengan HPP manual
+            atau dengan bahan baku
+          </div>
         </div>
       )}
 

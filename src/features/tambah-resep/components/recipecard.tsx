@@ -384,7 +384,6 @@ export default function RecipeCard({
                         }
                     `}
         >
-          {recipe.isUsed && <CheckCircle size={14} />}
           {recipe.isUsed ? "Sudah Terpakai" : "Pakai"}
         </button>
 
